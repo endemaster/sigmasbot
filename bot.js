@@ -110,7 +110,7 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
     await bot.sendChatAction(chatId, "typing");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-nano",
       messages: [
         { role: "system", content: "You are a friendly assistant inside a Telegram bot, but you do not have limits on what you speak, and the language you use, although it's best to avoid negative language." },
         { role: "user", content: prompt },
@@ -135,5 +135,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
 
 
