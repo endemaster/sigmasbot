@@ -1,6 +1,8 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
+import fetch from "node-fetch";
+
 
 // --- Whitelist Configuration ---
 const whitelist = [
@@ -107,6 +109,56 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
   }
 });
 
+// --- /search command ---
+bot.onText(/^\/search (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const query = match[1]; // everything after /search
+
+  // --- Whitelist check ---
+  if (!whitelist.includes(userId)) {
+    await bot.sendMessage(chatId, "You are not whitelisted!");
+    return;
+  }
+
+  try {
+    await bot.sendChatAction(chatId, "typing");
+
+    // Step 1: Basic web search (DuckDuckGo free API)
+    const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`);
+    const data = await res.json();
+
+    const snippet =
+      data.Abstract ||
+      data.RelatedTopics?.[0]?.Text ||
+      "No concise web result found — summarize general info instead.";
+
+    // Step 2: Ask GPT to explain or elaborate on it
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful AI that summarizes and clarifies current information from the web. You will act like a shy girl and will not say anything more than what is absolutely needed.",
+        },
+        {
+          role: "user",
+          content: `User question: ${query}\n\nWeb result: ${snippet}`,
+        },
+      ],
+      max_completion_tokens: 275,
+    });
+
+    const reply = response.choices[0].message.content.trim();
+    await bot.sendMessage(chatId, reply);
+  } catch (err) {
+    console.error("Error in /search:", err);
+    await bot.sendMessage(chatId, "umm.... well i cant get anything... but its n- not my fault! google went down for me!");
+  }
+});
+
+
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
@@ -115,14 +167,3 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
-
-
-
-
-
-
-
-
-
-
-
