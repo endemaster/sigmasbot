@@ -1,7 +1,6 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-import fetch from "node-fetch";
 
 
 // --- Whitelist Configuration ---
@@ -167,3 +166,4 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
