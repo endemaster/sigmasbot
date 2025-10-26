@@ -63,7 +63,7 @@ bot.onText(/\/mymessages/, (msg) => {
 
   bot.sendMessage(
     chatId,
-    `You counted ${count} messages from ${startStr} to ${endStr}`
+    `You spake ${count} messages from ${startStr} to ${endStr}`
   );
 });
 
@@ -72,3 +72,4 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(chatId, "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues :sparkling_heart:");
 });
+
