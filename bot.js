@@ -85,11 +85,11 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
     await bot.sendChatAction(chatId, "typing");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-nano",
+      model: "gpt-4.1-nano",
       messages: [
         {
           role: "system",
-          content: "You are a nice Telegram assistant bot, and be zesty as hell.",
+          content: "You are a nice Telegram assistant bot, and be zesty as hell, and try to have a personality.",
         },
         { role: "user", content: prompt },
       ],
@@ -112,6 +112,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
 
