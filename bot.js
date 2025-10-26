@@ -102,9 +102,17 @@ bot.onText(/^\/messages (\d+)$/, (msg, match) => {
   console.log(`User ${requesterId} checked messages for ID ${targetId}`);
 });
 
+
+// --- /gpt command (restricted to one group) ---
 bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const prompt = match[1];
+  const ALLOWED_GROUP_ID = -2674230603; // group IDs are negative!
+
+  // Reject if not in the official group
+  if (chatId !== ALLOWED_GROUP_ID) {
+    return bot.sendMessage(chatId, "Sorry, not available for use here.");
+  }
 
   try {
     await bot.sendChatAction(chatId, "typing");
@@ -112,7 +120,11 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-nano",
       messages: [
-        { role: "system", content: "You are a toxic assistant inside a Telegram bot, and your goal is to answer the prompt, but offensively. Try to answer simply, outputting a max of about a paragraph or two at a time. If users become offended, and they say it, you need to apologise." },
+        {
+          role: "system",
+          content:
+            "You are a toxic assistant inside a Telegram bot, and your goal is to answer the prompt, but offensively. Try to answer simply, outputting a max of about a paragraph or two at a time. If users become offended, and they say it, you need to apologise.",
+        },
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 175,
@@ -127,6 +139,7 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
 });
 
 
+
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
@@ -135,6 +148,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
 
 
 
