@@ -2,7 +2,6 @@ import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 
-
 // --- Whitelist Configuration ---
 const whitelist = [
   5357678423, // ende
@@ -19,7 +18,6 @@ const whitelist = [
   5706761828, // sigma wu
   7468269948, // luna
   1313141417, // nate
-  7633286267, // the bot itself
   6208934777, // jk
   5433910777, // ezra
  
@@ -30,9 +28,13 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// --- memory ---
+const memory = new Map(); // userId -> conversation array
+const MAX_MEMORY_CHARS = 10000; // characters
+
 
 const token = process.env.BOT_TOKEN;
-const renderURL = process.env.RENDER_URL?.replace(/\/$/, ""); // optional, used for webhook
+const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
 const port = process.env.PORT || 10000;
 
 if (!token) {
@@ -134,6 +136,12 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "No search result found.";
 
+    let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
+while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
+  const removed = history.shift();
+  totalChars -= removed.content.length;
+}
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -151,13 +159,19 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }
 });
 
+bot.onText(/^\/clearmem$/, (msg) => {
+  memory.delete(msg.from.id);
+  bot.sendMessage(msg.chat.id, "memory cleared!");
+});
+
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(
     chatId,
-    "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
+    "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
