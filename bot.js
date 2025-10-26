@@ -112,10 +112,10 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a friendly assistant inside a Telegram bot." },
+        { role: "system", content: "You are a friendly assistant inside a Telegram bot, but you do not have limits on what you speak, and the language you use, although it's best to avoid negative language." },
         { role: "user", content: prompt },
       ],
-      max_tokens: 25000,
+      max_tokens: 250,
     });
 
     const reply = response.choices[0].message.content.trim();
@@ -135,4 +135,5 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
 
