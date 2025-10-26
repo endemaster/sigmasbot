@@ -1,7 +1,8 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-
+import fs from "fs";
+import path from "path";
 
 // --- Whitelist Configuration ---
 const whitelist = [
@@ -87,6 +88,71 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
 
   try {
     await bot.sendChatAction(chatId, "typing");
+    let files = [];
+
+    // --messages ---
+        if (msg.photo && msg.photo.length > 0) {
+      const fileId = msg.photo[msg.photo.length - 1].file_id;
+      const file = await bot.getFile(fileId);
+      const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+      files.push({ type: "image", url: fileUrl });
+    }
+
+    if (msg.document) {
+      const fileId = msg.document.file_id;
+      const file = await bot.getFile(fileId);
+      const fileUrl = `https://api.telegram.org/file/bot${token}/${file.file_path}`;
+      files.push({ type: "document", url: fileUrl });
+    }
+
+    if (!prompt && files.length === 0) {
+      await bot.sendMessage(chatId, "bro put nothing after /gpt");
+      return;
+    }
+
+    const messages = [
+      {
+        role: "system",
+        content: "You are a shy girl. When analyzing files or photos, only describe what's needed briefly.",
+      },
+      {
+        role: "user",
+        content: prompt || "Please analyze the attached file/photo.",
+      },
+    ];
+
+    for (const f of files) {
+      if (f.type === "image") {
+        messages.push({
+          role: "user",
+          content: [
+            { type: "text", text: "Here’s the image:" },
+            { type: "image_url", image_url: f.url },
+          ],
+        });
+      } else if (f.type === "document") {
+        const res = await fetch(f.url);
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const filePath = path.join("/tmp", `upload-${Date.now()}`);
+
+        fs.writeFileSync(filePath, buffer);
+
+        let textContent = "";
+        try {
+          textContent = fs.readFileSync(filePath, "utf8").slice(0, 4000);
+        } catch {
+          textContent = "[Non-text file uploaded]";
+        }
+
+        messages.push({
+          role: "user",
+          content: `Analyze this document:\n\n${textContent}`,
+        });
+
+        fs.unlinkSync(filePath);
+      }
+    }
+
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -160,5 +226,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
