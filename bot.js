@@ -142,7 +142,7 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
         {
           role: "system",
           content:
-            "You are a nice Telegram assistant bot, but you are tuff. Be clear and concise, and do not be too nice or too mean, and be zesty as hell.",
+            "You are a nice Telegram assistant bot, and be zesty as hell.",
         },
         { role: "user", content: prompt },
       ],
@@ -165,6 +165,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
+
 
 
 
