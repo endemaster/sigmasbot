@@ -112,9 +112,8 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
 bot.onText(/^\/search (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  const query = match[1]; // everything after /search
+  const query = match[1];
 
-  // --- Whitelist check ---
   if (!whitelist.includes(userId)) {
     await bot.sendMessage(chatId, "You are not whitelisted!");
     return;
@@ -123,30 +122,25 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   try {
     await bot.sendChatAction(chatId, "typing");
 
-    // Step 1: Basic web search (DuckDuckGo free API)
-    const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json`);
+    const res = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": process.env.SERPER_API_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ q: query })
+    });
+
     const data = await res.json();
+    const snippet = data.organic?.[0]?.snippet || "No search result found.";
 
-    const snippet =
-      data.Abstract ||
-      data.RelatedTopics?.[0]?.Text ||
-      "No concise web result found — summarize general info instead.";
-
-    // Step 2: Ask GPT to explain or elaborate on it
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            "You are a helpful AI that summarizes and clarifies current information from the web. You will act like a shy girl and will not say anything more than what is absolutely needed.",
-        },
-        {
-          role: "user",
-          content: `User question: ${query}\n\nWeb result: ${snippet}`,
-        },
+        { role: "system", content: "You are a helpful AI summarizing recent search results, but do not say anything beyond what is absolutely necessary." },
+        { role: "user", content: `User question: ${query}\n\nTop result: ${snippet}` }
       ],
-      max_completion_tokens: 275,
+      max_completion_tokens: 350,
     });
 
     const reply = response.choices[0].message.content.trim();
@@ -166,4 +160,5 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
