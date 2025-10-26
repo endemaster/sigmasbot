@@ -20,6 +20,7 @@ const whitelist = [
   1313141417, // nate
   6208934777, // jk
   5433910777, // ezra
+  6486532366, // noah kim
  
 ];
 
@@ -189,6 +190,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
 
