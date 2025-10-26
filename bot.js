@@ -17,7 +17,8 @@ const whitelist = [
   1675886817, // zhenya
   5706761828, // sigma wu
   7468269948, // luna
-  2674230603, // nate
+  1313141417, // nate
+ 
 ];
 
 
@@ -141,7 +142,7 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
         {
           role: "system",
           content:
-            "You are a nice Telegram assistant bot, and you will align yourself with Christian values, and try to act like a cute girl to troll people.",
+            "You are a nice Telegram assistant bot, and you will align yourself with Christian values.",
         },
         { role: "user", content: prompt },
       ],
@@ -164,6 +165,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
+
 
 
 
