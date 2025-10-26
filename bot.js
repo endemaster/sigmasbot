@@ -39,14 +39,15 @@ app.use(express.json());
 
 // Initialize bot (webhook mode)
 const bot = new TelegramBot(token);
-const webhookPath = /bot${token};
-const webhookURL = ${renderURL || "https://sigmasbot.onrender.com"}${webhookPath};
+const webhookPath = `/bot${token}`;
+const webhookURL = `${renderURL || "https://sigmasbot.onrender.com"}${webhookPath}`;
+
 
 // Set the webhook
 (async () => {
   try {
     await bot.setWebHook(webhookURL);
-    console.log(Webhook set: ${webhookURL});
+    console.log(`Webhook set: ${webhookURL}`);
   } catch (err) {
     console.error("Error setting webhook:", err);
   }
@@ -162,3 +163,4 @@ bot.onText(/^\/start$/, async (msg) => {
     "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
+
