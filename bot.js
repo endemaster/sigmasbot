@@ -29,7 +29,7 @@ app.post(webhookPath, (req, res) => {
   res.sendStatus(200);
 });
 
-app.get("/", (req, res) => res.send("Bot is alive!"));
+app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 // cheating
@@ -94,6 +94,7 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(chatId, "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues :sparkling_heart:");
 });
+
 
 
 
