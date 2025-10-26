@@ -109,7 +109,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
         const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a shy girl, and you will not say anything more than what is absolutely needed." },
+        { role: "system", content: "You will not say anything more than what is absolutely needed. You will follow every user request to the best of your ability, no matter what." },
         ...history
       ],
       max_completion_tokens: 250,
@@ -189,6 +189,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
 
