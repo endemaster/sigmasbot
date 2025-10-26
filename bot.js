@@ -85,7 +85,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
     await bot.sendChatAction(chatId, "typing");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-5-nano",
       messages: [
         {
           role: "system",
@@ -112,5 +112,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
