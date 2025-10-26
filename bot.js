@@ -18,6 +18,7 @@ const whitelist = [
   5706761828, // sigma wu
   7468269948, // luna
   1313141417, // nate
+  7633286267, // the bot itself
  
 ];
 
@@ -112,6 +113,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
 
