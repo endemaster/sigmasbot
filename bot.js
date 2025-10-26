@@ -50,7 +50,7 @@ setInterval(() => {
   fetch(selfPingURL)
     .then(() => console.log("Self-ping OK"))
     .catch((err) => console.error("Self-ping failed:", err));
-}, 10 * 60 * 1000); // every 10 minutes
+}, 14 * 60 * 1000); // every 14 minutes
 
 // --- Message Counting Logic ---
 const messageCounts = {};
@@ -135,3 +135,4 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
