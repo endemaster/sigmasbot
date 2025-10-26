@@ -107,7 +107,7 @@ bot.onText(/^\/messages (\d+)$/, (msg, match) => {
 bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const prompt = match[1];
-  const ALLOWED_GROUP_ID = -2674230603; // group IDs are negative!
+  const ALLOWED_GROUP_ID = 2674230603
 
   // Reject if not in the official group
   if (chatId !== ALLOWED_GROUP_ID) {
@@ -148,6 +148,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
 
 
 
