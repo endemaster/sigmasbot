@@ -61,7 +61,7 @@ app.post(webhookPath, (req, res) => {
 
 // Simple root route
 app.get("/", (req, res) => res.send("sigma"));
-app.listen(port, () => console.log(Server running on port ${port}));
+app.listen(port, () => console.log(`Server running on port ${port}`));
 
 // --- Self-ping to keep Render awake ---
 const selfPingURL = "https://sigmasbot.onrender.com";
@@ -98,7 +98,7 @@ bot.onText(/^\/messages$/, (msg) => {
   const endStr = endDate.toISOString().split("T")[0];
   const count = messageCounts[chatId]?.[userId] || 0;
 
-  bot.sendMessage(chatId, You sent ${count} messages from ${startStr} to ${endStr});
+  bot.sendMessage(chatId, `You sent ${count} messages from ${startStr} to ${endStr}`);
 });
 
 // --- /messages <id> command ---
@@ -115,10 +115,10 @@ bot.onText(/^\/messages (\d+)$/, (msg, match) => {
 
   bot.sendMessage(
     chatId,
-    User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}
+    `User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}`
   );
 
-  console.log(User ${requesterId} checked messages for ID ${targetId});
+  console.log(`User ${requesterId} checked messages for ID ${targetId}`);
 });
 
 bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
@@ -163,4 +163,5 @@ bot.onText(/^\/start$/, async (msg) => {
     "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
+
 
