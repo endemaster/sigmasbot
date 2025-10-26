@@ -1,7 +1,7 @@
 // bot.js
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
-import fetch from "node-fetch";
+
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL; // e.g. https://sigmasbot.onrender.com
