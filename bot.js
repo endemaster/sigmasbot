@@ -88,7 +88,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
     await bot.sendChatAction(chatId, "typing");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4.1-nano",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -96,7 +96,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 267,
+      max_completion_tokens: 250,
     });
 
     const reply = response.choices[0].message.content.trim();
@@ -115,6 +115,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
 
