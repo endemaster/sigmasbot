@@ -4,7 +4,7 @@ import TelegramBot from "node-telegram-bot-api";
 
 
 const token = process.env.BOT_TOKEN;
-const renderURL = process.env.RENDER_URL; // e.g. https://sigmasbot.onrender.com
+const renderURL = process.env.RENDER_URL;
 const port = process.env.PORT || 10000;
 
 if (!token || !renderURL) {
@@ -94,6 +94,7 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(chatId, "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues :sparkling_heart:");
 });
+
 
 
 
