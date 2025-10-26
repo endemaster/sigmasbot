@@ -65,10 +65,15 @@ app.post(webhookPath, (req, res) => {
 app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const prompt = msg.text;
 
   // --- Whitelist check ---
   if (!whitelist.includes(userId)) {
-    return bot.sendMessage(chatId, "You are not whitelisted!");
+    await bot.sendMessage(chatId, "You are not whitelisted!");
+    return;
   }
 
   try {
@@ -79,21 +84,21 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
       messages: [
         {
           role: "system",
-          content:
-            "You are a nice Telegram assistant bot, and be zesty as hell.",
+          content: "You are a nice Telegram assistant bot, and be zesty as hell.",
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 200,
+      max_completion_tokens: 267,
     });
 
     const reply = response.choices[0].message.content.trim();
-    bot.sendMessage(chatId, reply || "I didn’t get a response.");
+    await bot.sendMessage(chatId, reply || "I didn’t get a response.");
   } catch (err) {
     console.error("Error calling GPT:", err);
-    bot.sendMessage(chatId, "Something went wrong with GPT. Try again later.");
+    await bot.sendMessage(chatId, "Something went wrong with GPT. Try again later.");
   }
 });
+
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
@@ -103,3 +108,4 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
