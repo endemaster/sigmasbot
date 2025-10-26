@@ -17,6 +17,7 @@ const whitelist = [
   1675886817, // zhenya
   5706761828, // sigma wu
   7468269948, // luna
+  2674230603, // nate
 ];
 
 
@@ -140,11 +141,11 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
         {
           role: "system",
           content:
-            "You are a toxic assistant inside a Telegram bot, and your goal is to answer the prompt, but offensively. Try to answer simply, outputting a max of about a paragraph or two at a time. If users become offended, and they say it, you need to apologise.",
+            "You are a nice Telegram assistant bot, and you will align yourself with Christian values, and try to act like a cute girl to troll people.",
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 175,
+      max_completion_tokens: 200,
     });
 
     const reply = response.choices[0].message.content.trim();
@@ -163,5 +164,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
+
 
 
