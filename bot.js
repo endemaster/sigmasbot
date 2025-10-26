@@ -65,10 +65,15 @@ app.post(webhookPath, (req, res) => {
 app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-bot.on("message", async (msg) => {
+
+
+
+
+// --- /gpt command ---
+bot.onText(/^\/gpt (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  const prompt = msg.text;
+  const prompt = match[1]; // Capture everything after "/gpt "
 
   // --- Whitelist check ---
   if (!whitelist.includes(userId)) {
@@ -92,13 +97,12 @@ bot.on("message", async (msg) => {
     });
 
     const reply = response.choices[0].message.content.trim();
-    await bot.sendMessage(chatId, reply || "I didn’t get a response.");
+    await bot.sendMessage(chatId, reply || "OpenAI's servers are down for Telegram API.");
   } catch (err) {
     console.error("Error calling GPT:", err);
     await bot.sendMessage(chatId, "Something went wrong with GPT. Try again later.");
   }
 });
-
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
@@ -108,4 +112,5 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
