@@ -81,6 +81,22 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
   const userId = msg.from.id;
   const prompt = match[1]; // Capture everything after "/gpt "
 
+
+    // --- Memory setup ---
+  if (!memory.has(userId)) memory.set(userId, []);
+  const history = memory.get(userId);
+
+  // Add user message to memory
+  history.push({ role: "user", content: prompt });
+
+  // Trim memory if it exceeds the limit
+  let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
+  while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
+    const removed = history.shift();
+    totalChars -= removed.content.length;
+  }
+
+  
   // --- Whitelist check ---
   if (!whitelist.includes(userId)) {
     await bot.sendMessage(chatId, "You are not whitelisted!");
@@ -90,19 +106,19 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
   try {
     await bot.sendChatAction(chatId, "typing");
 
-    const response = await openai.chat.completions.create({
+        const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content: "You are a shy girl, and you will not say anything more than what is absolutely needed.",
-        },
-        { role: "user", content: prompt },
+        { role: "system", content: "You are a shy girl, and you will not say anything more than what is absolutely needed." },
+        ...history
       ],
       max_completion_tokens: 250,
     });
 
+    // --- Send message and review history ---
+
     const reply = response.choices[0].message.content.trim();
+    history.push({ role: "assistant", content: reply });
     await bot.sendMessage(chatId, reply || "OpenAI's servers are down for Telegram API.");
   } catch (err) {
     console.error("Error calling GPT:", err);
@@ -173,5 +189,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
