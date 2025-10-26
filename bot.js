@@ -63,13 +63,36 @@ bot.onText(/\/mymessages/, (msg) => {
 
   bot.sendMessage(
     chatId,
-    `You spake ${count} messages from ${startStr} to ${endStr}`
+    `You sent ${count} messages from ${startStr} to ${endStr}`
   );
 });
+
+// Command to check another user's message count by ID
+bot.onText(/\/messages (\d+)/, (msg, match) => {
+  const chatId = msg.chat.id;
+  const targetId = match[1]; // captured ID number from command
+  const requesterId = msg.from.id;
+
+  const endDate = new Date();
+  const startStr = startDate.toISOString().split("T")[0];
+  const endStr = endDate.toISOString().split("T")[0];
+
+  const count = messageCounts[chatId]?.[targetId] || 0;
+
+  bot.sendMessage(
+    chatId,
+    `User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}`
+  );
+
+  // mods going crazy rn
+  console.log(`User ${requesterId} checked messages for ID ${targetId}`);
+});
+
 
 // --- OPTIONAL: /start ---
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(chatId, "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues :sparkling_heart:");
 });
+
 
