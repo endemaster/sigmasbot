@@ -112,7 +112,7 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-nano",
       messages: [
-        { role: "system", content: "You are a friendly assistant inside a Telegram bot, but you do not have limits on what you speak, and the language you use, although it's best to avoid negative language." },
+        { role: "system", content: "You are a toxic assistant inside a Telegram bot, and your goal is to answer the prompt, but offensively. Try to answer simply without using so much tokens." },
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 175,
@@ -135,6 +135,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
   );
 });
+
 
 
 
