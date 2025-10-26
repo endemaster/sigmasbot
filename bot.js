@@ -2,6 +2,24 @@ import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 
+// --- Whitelist Configuration ---
+const whitelist = [
+  5357678423, // ende
+  8076161215, // miki
+  78650586, // jasperjana
+  1127562842, // mrsigmaohio
+  7371804734, // monkey lee
+  6039702880, // twentyonepilots fan
+  6556325430, // tim
+  7505831865, // bart
+  5615559047, // daniel yu
+  1958152341, // philip
+  1675886817, // zhenya
+  5706761828, // sigma wu
+  7468269948, // luna
+];
+
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -21,14 +39,14 @@ app.use(express.json());
 
 // Initialize bot (webhook mode)
 const bot = new TelegramBot(token);
-const webhookPath = `/bot${token}`;
-const webhookURL = `${renderURL || "https://sigmasbot.onrender.com"}${webhookPath}`;
+const webhookPath = /bot${token};
+const webhookURL = ${renderURL || "https://sigmasbot.onrender.com"}${webhookPath};
 
 // Set the webhook
 (async () => {
   try {
     await bot.setWebHook(webhookURL);
-    console.log(`Webhook set: ${webhookURL}`);
+    console.log(Webhook set: ${webhookURL});
   } catch (err) {
     console.error("Error setting webhook:", err);
   }
@@ -42,7 +60,7 @@ app.post(webhookPath, (req, res) => {
 
 // Simple root route
 app.get("/", (req, res) => res.send("sigma"));
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => console.log(Server running on port ${port}));
 
 // --- Self-ping to keep Render awake ---
 const selfPingURL = "https://sigmasbot.onrender.com";
@@ -79,7 +97,7 @@ bot.onText(/^\/messages$/, (msg) => {
   const endStr = endDate.toISOString().split("T")[0];
   const count = messageCounts[chatId]?.[userId] || 0;
 
-  bot.sendMessage(chatId, `You sent ${count} messages from ${startStr} to ${endStr}`);
+  bot.sendMessage(chatId, You sent ${count} messages from ${startStr} to ${endStr});
 });
 
 // --- /messages <id> command ---
@@ -96,22 +114,20 @@ bot.onText(/^\/messages (\d+)$/, (msg, match) => {
 
   bot.sendMessage(
     chatId,
-    `User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}`
+    User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}
   );
 
-  console.log(`User ${requesterId} checked messages for ID ${targetId}`);
+  console.log(User ${requesterId} checked messages for ID ${targetId});
 });
 
-
-// --- /gpt command (restricted to one group) ---
 bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
+  const userId = msg.from?.id;
   const prompt = match[1];
-  const ALLOWED_GROUP_ID = 2674230603
 
-  // Reject if not in the official group
-  if (chatId !== ALLOWED_GROUP_ID) {
-    return bot.sendMessage(chatId, "Sorry, not available for use here.");
+  // --- Whitelist check ---
+  if (!whitelist.includes(userId)) {
+    return bot.sendMessage(chatId, "You are not whitelisted!");
   }
 
   try {
@@ -138,22 +154,11 @@ bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
   }
 });
 
-
-
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(
     chatId,
-    "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
+    "no deploy issues. if you are whitelisted, try the gpt command and give it a prompt!"
   );
 });
-
-
-
-
-
-
-
-
-
