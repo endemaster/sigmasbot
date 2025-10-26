@@ -1,5 +1,11 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, ""); // optional, used for webhook
@@ -95,6 +101,31 @@ bot.onText(/^\/messages (\d+)$/, (msg, match) => {
 
   console.log(`User ${requesterId} checked messages for ID ${targetId}`);
 });
+
+bot.onText(/^\/gpt (.+)$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const prompt = match[1];
+
+  try {
+    await bot.sendChatAction(chatId, "typing");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a friendly assistant inside a Telegram bot." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 25000,
+    });
+
+    const reply = response.choices[0].message.content.trim();
+    bot.sendMessage(chatId, reply || "I didn’t get a response.");
+  } catch (err) {
+    console.error("Error calling GPT:", err);
+    bot.sendMessage(chatId, "Something went wrong with GPT. Try again later.");
+  }
+});
+
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
