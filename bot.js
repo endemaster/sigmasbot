@@ -20,6 +20,7 @@ const whitelist = [
   1313141417, // nate
   7633286267, // the bot itself
   6208934777, // jk
+  5433910777, // ezra
  
 ];
 
@@ -114,6 +115,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
 
