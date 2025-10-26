@@ -1,48 +1,58 @@
-// bot.js
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 
-
 const token = process.env.BOT_TOKEN;
-const renderURL = process.env.RENDER_URL;
+const renderURL = process.env.RENDER_URL?.replace(/\/$/, ""); // optional, used for webhook
 const port = process.env.PORT || 10000;
 
-if (!token || !renderURL) {
-  console.error("Missing BOT_TOKEN or RENDER_URL in environment variables");
+if (!token) {
+  console.error("Missing BOT_TOKEN in environment variables");
   process.exit(1);
 }
 
 const app = express();
 app.use(express.json());
 
+// Initialize bot (webhook mode)
 const bot = new TelegramBot(token);
 const webhookPath = `/bot${token}`;
-const webhookURL = `${renderURL}${webhookPath}`;
+const webhookURL = `${renderURL || "https://sigmasbot.onrender.com"}${webhookPath}`;
 
-bot
-  .setWebHook(webhookURL)
-  .then(() => console.log(`Webhook set: ${webhookURL}`))
-  .catch((err) => console.error("Error setting webhook:", err));
+// Set the webhook
+(async () => {
+  try {
+    await bot.setWebHook(webhookURL);
+    console.log(`Webhook set: ${webhookURL}`);
+  } catch (err) {
+    console.error("Error setting webhook:", err);
+  }
+})();
 
+// Handle Telegram webhook updates
 app.post(webhookPath, (req, res) => {
   bot.processUpdate(req.body);
   res.sendStatus(200);
 });
 
+// Simple root route
 app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-// cheating
+// --- Self-ping to keep Render awake ---
+const selfPingURL = "https://sigmasbot.onrender.com";
 setInterval(() => {
-  fetch(renderURL)
+  fetch(selfPingURL)
     .then(() => console.log("Self-ping OK"))
     .catch((err) => console.error("Self-ping failed:", err));
 }, 10 * 60 * 1000); // every 10 minutes
 
+// --- Message Counting Logic ---
 const messageCounts = {};
-const startDate = new Date(); // when counting began
+const startDate = new Date();
 
 bot.on("message", (msg) => {
+  if (!msg.from) return; // ignore service/system messages
+
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
@@ -52,31 +62,30 @@ bot.on("message", (msg) => {
   messageCounts[chatId][userId]++;
 });
 
-bot.onText(/\/messages/, (msg) => {
+// --- /messages command ---
+bot.onText(/^\/messages$/, (msg) => {
   const chatId = msg.chat.id;
-  const userId = msg.from.id;
+  const userId = msg.from?.id;
+  if (!userId) return;
 
   const endDate = new Date();
   const startStr = startDate.toISOString().split("T")[0];
   const endStr = endDate.toISOString().split("T")[0];
   const count = messageCounts[chatId]?.[userId] || 0;
 
-  bot.sendMessage(
-    chatId,
-    `You sent ${count} messages from ${startStr} to ${endStr}`
-  );
+  bot.sendMessage(chatId, `You sent ${count} messages from ${startStr} to ${endStr}`);
 });
 
-// Command to check another user's message count by ID
-bot.onText(/\/messages (\d+)/, (msg, match) => {
+// --- /messages <id> command ---
+bot.onText(/^\/messages (\d+)$/, (msg, match) => {
   const chatId = msg.chat.id;
-  const targetId = match[1]; // captured ID number from command
-  const requesterId = msg.from.id;
+  const targetId = match[1];
+  const requesterId = msg.from?.id;
+  if (!requesterId) return;
 
   const endDate = new Date();
   const startStr = startDate.toISOString().split("T")[0];
   const endStr = endDate.toISOString().split("T")[0];
-
   const count = messageCounts[chatId]?.[targetId] || 0;
 
   bot.sendMessage(
@@ -84,18 +93,14 @@ bot.onText(/\/messages (\d+)/, (msg, match) => {
     `User with ID ${targetId} has sent ${count} messages from ${startStr} to ${endStr}`
   );
 
-  // mods going crazy rn
   console.log(`User ${requesterId} checked messages for ID ${targetId}`);
 });
 
-
-// --- OPTIONAL: /start ---
-bot.onText(/\/start/, async (msg) => {
+// --- /start command ---
+bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
-  await bot.sendMessage(chatId, "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues :sparkling_heart:");
+  await bot.sendMessage(
+    chatId,
+    "i heard that, and im counting, and everything is fine, and there might be bugs but dont worry about those rn, but at least there are no deploy issues 💖"
+  );
 });
-
-
-
-
-
