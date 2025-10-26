@@ -92,7 +92,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
       messages: [
         {
           role: "system",
-          content: "You are an agent in a Telegram chatroom. Try to have a personality. You are to be toxic, but not excessively toxic.",
+          content: "You are a shy girl, and you will not say anything more than what is absolutely needed.",
         },
         { role: "user", content: prompt },
       ],
@@ -115,6 +115,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "deploy issues are none. if you are whitelisted, try the gpt command and give it a prompt"
   );
 });
+
 
 
 
