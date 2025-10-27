@@ -200,7 +200,7 @@ bot.onText(/^\/clearmemall$/, async (msg) => {
   }
 
   memory.clear();
-  await bot.sendMessage(chatId, "clearmemall failed to activate");
+  await bot.sendMessage(chatId, "everybody, you just got cooked");
   console.log("memory cleared globally by admin");
 });
 
@@ -213,5 +213,6 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
