@@ -80,7 +80,7 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
 // --- /gpt command ---
-bot.onText(/^\/gpt(?:\s+(.+))?$/, async (msg, match) => {
+bot.onText(/\/gpt(?:\s+(.*))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   let prompt = match[1]?.trim();
@@ -315,6 +315,7 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
 
 
 
