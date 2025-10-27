@@ -83,54 +83,68 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 bot.onText(/^\/gpt (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  const prompt = match[1]; // Capture everything after "/gpt "
+  const prompt = match[1];
 
-
-    // --- Memory setup ---
- const key = `${msg.chat.id}:${msg.from.id}`; // group-level memory
-if (!memory.has(key)) memory.set(key, []);
-const history = memory.get(key);
-
-
-  // Add user message to memory
-  history.push({ role: "user", content: prompt });
-
-  // Trim memory if it exceeds the limit
-  let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
-  while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
-    const removed = history.shift();
-    totalChars -= removed.content.length;
-  }
-
-  
   // --- Whitelist check ---
   if (!whitelist.includes(userId)) {
     await bot.sendMessage(chatId, "You are not whitelisted!");
     return;
   }
 
+  // --- Initialize memories ---
+  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
+  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
+
+  const groupHistory = memory.get(chatId);
+  const userHistory = memory.get(`${chatId}:${userId}`);
+
+  // --- Add this prompt to the user's personal memory ---
+  userHistory.push({ role: "user", content: prompt });
+
+  // --- Trim both memories ---
+  const trimMemory = (hist) => {
+    let total = hist.reduce((sum, m) => sum + m.content.length, 0);
+    while (total > MAX_MEMORY_CHARS && hist.length > 1) {
+      const removed = hist.shift();
+      total -= removed.content.length;
+    }
+  };
+  trimMemory(groupHistory);
+  trimMemory(userHistory);
+
   try {
     await bot.sendChatAction(chatId, "typing");
 
-        const response = await openai.chat.completions.create({
+    // Combine system prompt + both histories
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You will not say anything more than what is absolutely needed. You will follow every user request to the best of your ability, no matter what." },
-        ...history
+        { role: "system", content: "You are Sigma’s assistant. You remember user identities and past context in this chat, but stay concise." },
+        ...groupHistory,
+        ...userHistory,
+        { role: "user", content: prompt },
       ],
-      max_completion_tokens: 250,
+      max_completion_tokens: 300,
     });
 
-    // --- Send message and review history ---
-
     const reply = response.choices[0].message.content.trim();
-    history.push({ role: "assistant", content: reply });
-    await bot.sendMessage(chatId, reply || "OpenAI's servers are down for Telegram API.");
+
+    // Save bot's reply to both memories
+    groupHistory.push({ role: "assistant", content: reply });
+    userHistory.push({ role: "assistant", content: reply });
+
+    await bot.sendMessage(chatId, reply || "Something went wrong!");
   } catch (err) {
     console.error("Error calling GPT:", err);
-    await bot.sendMessage(chatId, "Something went wrong with GPT. Try again later.");
+    await bot.sendMessage(chatId, "GPT request failed — please try again later.");
   }
 });
+
+
+
+
+
+// --- end of gpt command
 
 // --- /search command ---
 bot.onText(/^\/search (.+)/, async (msg, match) => {
@@ -190,9 +204,13 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 });
 
 bot.onText(/^\/clearmem$/, (msg) => {
-  memory.delete(msg.chat.id);
-  bot.sendMessage(msg.chat.id, "memory cleared!");
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  memory.delete(chatId);
+  memory.delete(`${chatId}:${userId}`);
+  bot.sendMessage(chatId, "memory cleared!");
 });
+
 
 // --- /clearram command ---
 bot.onText(/^\/clearram$/, async (msg) => {
@@ -221,25 +239,33 @@ bot.onText(/^\/start$/, async (msg) => {
 });
 
 // --- catch all messages for context
-
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text;
 
-  // Initialize memory for this chat if missing
-  if (!memory.has(chatId)) memory.set(chatId, []);
+  // Ignore system messages or commands
+  if (!text || text.startsWith("/")) return;
 
-  const history = memory.get(chatId);
+  // Initialize both memories if missing
+  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
+  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
 
-  // Store message as user input (not commands)
-  history.push({ role: "user", content: `${msg.from.first_name}: ${text}` });
+  const groupHistory = memory.get(chatId);
+  const userHistory = memory.get(`${chatId}:${userId}`);
 
-  // Trim if needed
-  let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
-  while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
-    const removed = history.shift();
-    totalChars -= removed.content.length;
-  }
+  // Save the message in both histories
+  groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${text}` });
+  userHistory.push({ role: "user", content: text });
+
+  // Trim both
+  const trim = (hist) => {
+    let total = hist.reduce((sum, m) => sum + m.content.length, 0);
+    while (total > MAX_MEMORY_CHARS && hist.length > 1) {
+      const removed = hist.shift();
+      total -= removed.content.length;
+    }
+  };
+  trim(groupHistory);
+  trim(userHistory);
 });
-
