@@ -84,6 +84,7 @@ bot.onText(/^\/gpt(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   let prompt = match[1]?.trim();
+  const text = msg.text || "";
 
  // --- Whitelist check ---
 if (!whitelist.includes(userId)) {
@@ -100,15 +101,20 @@ const userHistory = memory.get(`${chatId}:${userId}`);
 
 // --- If no prompt was given, use the last few messages as context ---
 if (!prompt) {
-  const recentContext = [...groupHistory].slice(-15); // last 15 user messages
-  if (recentContext.length === 0) {
-    await bot.sendMessage(chatId, "hmm...");
-    return;
+  if (/.+\/gpt.+/i.test(text)) {
+    // If /gpt appears somewhere inside the message (not just at start), keep it as part of text
+    prompt = text.trim();
+  } else {
+    // If user only typed /gpt, use recent context
+    const recentContext = [...groupHistory].slice(-15);
+    if (recentContext.length === 0) {
+      await bot.sendMessage(chatId, "hmm...");
+      return;
+    }
+    prompt = "Continue the conversation naturally based on the recent context above.";
   }
-
-  // GPT will see this as a “continue conversation” action
-  prompt = "Continue the conversation naturally based on the recent context above.";
 }
+
 
 
   // --- Add this prompt to the user's personal memory ---
@@ -309,6 +315,7 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
 
 
 
