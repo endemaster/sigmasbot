@@ -2,6 +2,9 @@ import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 
+
+
+
 // --- Whitelist Configuration ---
 const whitelist = [
   5357678423, // ende
@@ -31,7 +34,7 @@ const openai = new OpenAI({
 
 // --- memory ---
 const memory = new Map(); // userId -> conversation array
-const MAX_MEMORY_CHARS = 10000; // characters
+const MAX_MEMORY_CHARS = 50000; // characters
 
 
 const token = process.env.BOT_TOKEN;
@@ -84,8 +87,10 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
 
 
     // --- Memory setup ---
-  if (!memory.has(userId)) memory.set(userId, []);
-  const history = memory.get(userId);
+ const key = msg.chat.id; // group-level memory
+if (!memory.has(key)) memory.set(key, []);
+const history = memory.get(key);
+
 
   // Add user message to memory
   history.push({ role: "user", content: prompt });
@@ -142,8 +147,9 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     await bot.sendChatAction(chatId, "typing");
 
     // --- Memory setup (like in /gpt) ---
-    if (!memory.has(userId)) memory.set(userId, []);
-    const history = memory.get(userId);
+      if (!memory.has(chatId)) memory.set(chatId, []);
+      const history = memory.get(chatId);
+
 
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -184,7 +190,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 });
 
 bot.onText(/^\/clearmem$/, (msg) => {
-  memory.delete(msg.from.id);
+  memory.delete(msg.chat.id);
   bot.sendMessage(msg.chat.id, "memory cleared!");
 });
 
@@ -204,17 +210,6 @@ bot.onText(/^\/clearram$/, async (msg) => {
   console.log("memory cleared globally by admin");
 });
 
-// --- /Spam command ---
-bot.onText(/^\/spam (.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
-  const query = match[1];
-
-  // Repeat the text 25 times safely
-  const repeated = query.repeat(5000);
-
-  await bot.sendMessage(chatId, repeated);
-});
-  
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
@@ -225,8 +220,25 @@ bot.onText(/^\/start$/, async (msg) => {
   );
 });
 
+// --- catch all messages for context
 
+bot.on("message", (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const text = msg.text;
 
+  // Initialize memory for this chat if missing
+  if (!memory.has(chatId)) memory.set(chatId, []);
 
+  const history = memory.get(chatId);
 
+  // Store message as user input (not commands)
+  history.push({ role: "user", content: `${msg.from.first_name}: ${text}` });
 
+  // Trim if needed
+  let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
+  while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
+    const removed = history.shift();
+    totalChars -= removed.content.length;
+  }
+});
