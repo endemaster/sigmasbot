@@ -138,8 +138,12 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     return;
   }
 
-  try {
+   try {
     await bot.sendChatAction(chatId, "typing");
+
+    // --- Memory setup (like in /gpt) ---
+    if (!memory.has(userId)) memory.set(userId, []);
+    const history = memory.get(userId);
 
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -153,12 +157,14 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "No search result found.";
 
+    // Trim memory if needed
     let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
-while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
-  const removed = history.shift();
-  totalChars -= removed.content.length;
-}
-    
+    while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
+      const removed = history.shift();
+      totalChars -= removed.content.length;
+    }
+
+    // Now use GPT to summarize the result
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -167,6 +173,7 @@ while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
       ],
       max_completion_tokens: 350,
     });
+
 
     const reply = response.choices[0].message.content.trim();
     await bot.sendMessage(chatId, reply);
@@ -190,6 +197,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
 
