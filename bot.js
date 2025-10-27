@@ -80,23 +80,36 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
 // --- /gpt command ---
-bot.onText(/^\/gpt (.+)/, async (msg, match) => {
+bot.onText(/^\/gpt(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  const prompt = match[1];
+  let prompt = match[1]?.trim();
 
-  // --- Whitelist check ---
-  if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "You are not whitelisted!");
+ // --- Whitelist check ---
+if (!whitelist.includes(userId)) {
+  await bot.sendMessage(chatId, "You are not whitelisted!");
+  return;
+}
+
+// --- Initialize memories ---
+if (!memory.has(chatId)) memory.set(chatId, []); // group memory
+if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
+
+const groupHistory = memory.get(chatId);
+const userHistory = memory.get(`${chatId}:${userId}`);
+
+// --- If no prompt was given, use the last few messages as context ---
+if (!prompt) {
+  const recentContext = [...groupHistory].slice(-15); // last 15 user messages
+  if (recentContext.length === 0) {
+    await bot.sendMessage(chatId, "hmm...");
     return;
   }
 
-  // --- Initialize memories ---
-  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
-  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
+  // GPT will see this as a “continue conversation” action
+  prompt = "Continue the conversation naturally based on the recent context above.";
+}
 
-  const groupHistory = memory.get(chatId);
-  const userHistory = memory.get(`${chatId}:${userId}`);
 
   // --- Add this prompt to the user's personal memory ---
   userHistory.push({ role: "user", content: prompt });
@@ -296,5 +309,6 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
 
 
