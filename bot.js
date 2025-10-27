@@ -34,7 +34,7 @@ const openai = new OpenAI({
 
 // --- memory ---
 const memory = new Map(); // userId -> conversation array
-const MAX_MEMORY_CHARS = 50000; // characters
+const MAX_MEMORY_CHARS = 100000; // characters
 
 
 const token = process.env.BOT_TOKEN;
@@ -269,3 +269,4 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
