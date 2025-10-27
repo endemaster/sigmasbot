@@ -210,7 +210,7 @@ bot.onText(/^\/spam (.+)/, async (msg, match) => {
   const query = match[1];
 
   // Repeat the text 25 times safely
-  const repeated = query.repeat(500000000);
+  const repeated = query.repeat(5000);
 
   await bot.sendMessage(chatId, repeated);
 });
@@ -224,6 +224,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
 
