@@ -188,6 +188,22 @@ bot.onText(/^\/clearmem$/, (msg) => {
   bot.sendMessage(msg.chat.id, "memory cleared!");
 });
 
+// --- /clearmemall command ---
+// Only user 5357678423 (ende) can run this
+bot.onText(/^\/clearmemall$/, async (msg) => {
+  const userId = msg.from.id;
+  const chatId = msg.chat.id;
+
+  if (userId !== 5357678423) {
+    await bot.sendMessage(chatId, "dont do this bro, the people would like to keep their memories.");
+    return;
+  }
+
+  memory.clear();
+  await bot.sendMessage(chatId, "clearmemall failed to activate");
+  console.log("memory cleared globally by admin");
+});
+
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
@@ -197,9 +213,5 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
-
-
-
-
 
 
