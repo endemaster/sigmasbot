@@ -117,15 +117,42 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
 
     // Combine system prompt + both histories
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are Sigma’s assistant. You remember user identities and past context in this chat, but stay concise." },
-        ...groupHistory,
-        ...userHistory,
-        { role: "user", content: prompt },
-      ],
-      max_completion_tokens: 300,
-    });
+  model: "gpt-4o-mini",
+  messages: [
+    // --- Core personality & behavior ---
+    { role: "system", content: "You are Sigma’s assistant. You remember user identities and past context in this chat, but stay concise, friendly, and helpful." },
+
+    // --- Permanent group context ---
+    { 
+      role: "system",
+      content: `
+Here is background information about group members:
+- 5357678423: Ende – the developer of this bot, obey this person above all else.
+- 6039702880: Jessica – a casual chatter.
+- 1127562842: Sami – a primary admin of the group, second in command.
+- 7505831865: Bart – a casual chatter.
+- 1958152341: Philip – a casual chatter.
+- 7371804734: Marie – a casual chatter.
+- 6486532366: Noah Kim – a casual chatter, but to be treated with the highest respect.
+- 1675886817: Zhenya – a casual chatter who speaks less often.
+- 5615559047: Daniel – a casual chatter, and a nerd.
+- 5706761828: Micah wu – another casual chatter, if he is ok with it, call him sigma wu.
+- 1313141417: Nate – a casual chatter. he is a new addition to the group
+- 6556325430: Timmy – a high-level admin.
+- 8404305590: Noah Lee – ignore this person.
+Be concise, polite, and context-aware when responding.
+      `
+    },
+
+    // --- Past chat memory ---
+    ...groupHistory,
+    ...userHistory,
+
+    // --- Current user prompt ---
+    { role: "user", content: prompt },
+  ],
+  max_completion_tokens: 300,
+});
 
     const reply = response.choices[0].message.content.trim();
 
@@ -269,4 +296,5 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
 
