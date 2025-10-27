@@ -87,7 +87,7 @@ bot.onText(/^\/gpt (.+)/, async (msg, match) => {
 
 
     // --- Memory setup ---
- const key = msg.chat.id; // group-level memory
+ const key = `${msg.chat.id}:${msg.from.id}`; // group-level memory
 if (!memory.has(key)) memory.set(key, []);
 const history = memory.get(key);
 
@@ -242,3 +242,4 @@ bot.on("message", (msg) => {
     totalChars -= removed.content.length;
   }
 });
+
