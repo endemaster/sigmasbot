@@ -189,7 +189,6 @@ bot.onText(/^\/clearmem$/, (msg) => {
 });
 
 // --- /clearram command ---
-// Only user 5357678423 can run this
 bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
@@ -205,6 +204,17 @@ bot.onText(/^\/clearram$/, async (msg) => {
   console.log("memory cleared globally by admin");
 });
 
+// --- /Spam command ---
+bot.onText(/^\/spam (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const query = match[1];
+
+  // Repeat the text 25 times safely
+  const repeated = query.repeat(500000000);
+
+  await bot.sendMessage(chatId, repeated);
+});
+  
 
 // --- /start command ---
 bot.onText(/^\/start$/, async (msg) => {
@@ -214,6 +224,7 @@ bot.onText(/^\/start$/, async (msg) => {
     "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
   );
 });
+
 
 
 
