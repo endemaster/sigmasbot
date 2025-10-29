@@ -52,7 +52,7 @@ app.use(express.json());
 // Initialize bot (webhook mode)
 const bot = new TelegramBot(token);
 const webhookPath = `/bot${token}`;
-const webhookURL = `${renderURL || "https://sigmasbot.onrender.com"}${webhookPath}`;
+const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
 
 // Set the webhook
@@ -315,6 +315,7 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
+
 
 
 
