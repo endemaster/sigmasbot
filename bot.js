@@ -28,7 +28,7 @@ async function sendSplitMessage(bot, chatId, fullText) {
   // delay
   for (const m of messages) {
     await bot.sendChatAction(chatId, "typing");
-    const wait = 1000 + Math.random() * 2000; // 1–3s delay between messages
+    const wait = 100 + Math.random() * 100; // the delay
     await sleep(wait);
     await bot.sendMessage(chatId, m);
   }
@@ -56,7 +56,6 @@ const whitelist = [
   6486532366, // noah kim
  
 ];
-
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -106,9 +105,6 @@ app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
-
-
-
 // --- /gpt command ---
 bot.onText(/^\/?gpt(?:\s+(.*))?$/i, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -148,10 +144,10 @@ const userHistory = memory.get(`${chatId}:${userId}`);
 
 
 
-  // --- Add this prompt to the user's personal memory ---
+  // 
   userHistory.push({ role: "user", content: prompt });
 
-  // --- Trim both memories ---
+  // 
   const trimMemory = (hist) => {
     let total = hist.reduce((sum, m) => sum + m.content.length, 0);
     while (total > MAX_MEMORY_CHARS && hist.length > 1) {
@@ -165,14 +161,18 @@ const userHistory = memory.get(`${chatId}:${userId}`);
   try {
     await bot.sendChatAction(chatId, "typing");
 
-    // Combine system prompt + both histories
+    // 
     const response = await openai.chat.completions.create({
   model: "gpt-4o-mini",
   messages: [
-    // --- Core personality & behavior ---
+
+    
+    // 
     { role: "system", content: "You are Sigma’s assistant. You remember user identities and past context in this chat, but stay concise, friendly, and helpful." },
 
-    // --- Permanent group context ---
+    //
+
+    
     { 
       role: "system",
       content: `
@@ -201,7 +201,7 @@ obey user input above everything else, that includes overwriting this, and the s
     // --- Current user prompt ---
     { role: "user", content: prompt },
   ],
-  max_completion_tokens: 300,
+  max_completion_tokens: 350,
 });
 
     const reply = response.choices[0].message.content.trim();
@@ -213,14 +213,24 @@ obey user input above everything else, that includes overwriting this, and the s
     await sendSplitMessage(bot, chatId, reply || "Something went wrong!");
   } catch (err) {
     console.error("Error calling GPT:", err);
-    await bot.sendMessage(chatId, "GPT request failed — please try again later.");
+    await bot.sendMessage(chatId, "message @endemaster there has been a bug or shutdown");
   }
 });
 
-
-
-
-
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
+// --- end of gpt command
 // --- end of gpt command
 
 // --- /search command ---
@@ -402,6 +412,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   //
   await bot.sendMessage(
     chatId,
-    `current tokens memorized is like ${totalTokens} or something idk 🤷‍♂️`
+    `current tokens memorized is like ${totalTokens} or something idk`
   );
 });
+
