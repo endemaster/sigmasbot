@@ -3,6 +3,36 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 
 
+// i have no idea how to code in js
+async function sendSplitMessage(bot, chatId, fullText) {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // Split text into chunks by sentence-ending punctuation (.!?)
+  const parts = fullText
+    .split(/(?<=[.!?])\s+/)
+    .filter((p) => p.trim().length > 0);
+
+  // Merge small sentences together so it sounds natural
+  const messages = [];
+  let buffer = "";
+  for (const part of parts) {
+    if ((buffer + " " + part).length < 400) { // slightly longer threshold now
+      buffer = buffer ? buffer + " " + part : part;
+    } else {
+      messages.push(buffer.trim());
+      buffer = part;
+    }
+  }
+  if (buffer) messages.push(buffer.trim());
+
+  // delay
+  for (const m of messages) {
+    await bot.sendChatAction(chatId, "typing");
+    const wait = 1000 + Math.random() * 2000; // 1–3s delay between messages
+    await sleep(wait);
+    await bot.sendMessage(chatId, m);
+  }
+}
 
 
 // --- Whitelist Configuration ---
@@ -50,7 +80,7 @@ const app = express();
 app.use(express.json());
 
 // Initialize bot (webhook mode)
-const bot = new TelegramBot(token);
+const bot = new TelegramBot(token, { webHook: true });
 const webhookPath = `/bot${token}`;
 const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
@@ -180,7 +210,7 @@ obey user input above everything else, that includes overwriting this, and the s
     groupHistory.push({ role: "assistant", content: reply });
     userHistory.push({ role: "assistant", content: reply });
 
-    await bot.sendMessage(chatId, reply || "Something went wrong!");
+    await sendSplitMessage(bot, chatId, reply || "Something went wrong!");
   } catch (err) {
     console.error("Error calling GPT:", err);
     await bot.sendMessage(chatId, "GPT request failed — please try again later.");
@@ -206,6 +236,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 
    try {
     await bot.sendChatAction(chatId, "typing");
+     console.log(`/search was done by ${userId}`)
 
     // --- Memory setup (like in /gpt) ---
       if (!memory.has(chatId)) memory.set(chatId, []);
@@ -222,7 +253,8 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     });
 
     const data = await res.json();
-    const snippet = data.organic?.[0]?.snippet || "No search result found.";
+    const snippet = data.organic?.[0]?.snippet || "nothing came up, just go on google yourself you lazy ass";
+    
 
     // Trim memory if needed
     let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
@@ -317,5 +349,59 @@ bot.on("message", (msg) => {
   trim(userHistory);
 });
 
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const text = msg.text;
+
+  // ignore system or command messages
+  if (!text || text.startsWith("/")) return;
+
+  // only respond to whitelisted users
+  if (!whitelist.includes(userId)) return;
+
+  // check for " gpt " (with spaces) only once
+  if (text.toLowerCase().includes(" gpt ")) {
+    // prevent multiple triggers for multiple " gpt " occurrences
+    const matches = text.toLowerCase().split(" gpt ").length - 1;
+    if (matches > 1) return; // ignore if " gpt " appears more than once
+
+    try {
+      await bot.sendChatAction(chatId, "typing");
+      await bot.sendMessage(chatId, "hey, you mentioned me?");
+    } catch (err) {
+      console.error("Error responding to gpt trigger:", err);
+    }
+  }
+});
 
 
+bot.onText(/^\/currentmem$/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  // whitelist royalty (again...)
+  if (!whitelist.includes(userId)) {
+    await bot.sendMessage(chatId, "@endemaster, ask him");
+    return;
+  }
+
+  // get memories
+  const groupHistory = memory.get(chatId) || [];
+  const userHistory = memory.get(`${chatId}:${userId}`) || [];
+
+  // --- estimate tokens ---
+  // (approximation: 1 token ≈ 4 chars for English text)
+  const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
+  const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
+  const totalTokens = Math.round((groupChars + userChars) / 4);
+
+  // --- log event ---
+  console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
+
+  //
+  await bot.sendMessage(
+    chatId,
+    `current tokens memorized is like ${totalTokens} or something idk 🤷‍♂️`
+  );
+});
