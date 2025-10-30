@@ -80,7 +80,7 @@ app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
 // --- /gpt command ---
-bot.onText(/\/gpt(?:\s+(.*))?/, async (msg, match) => {
+bot.onText(/^\/?gpt(?:\s+(.*))?$/i, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   let prompt = match[1]?.trim();
@@ -100,15 +100,16 @@ const groupHistory = memory.get(chatId);
 const userHistory = memory.get(`${chatId}:${userId}`);
 
 // --- If no prompt was given, use the last few messages as context ---
-if (!prompt) {
-  if (/.+\/gpt.+/i.test(text)) {
-    // If /gpt appears somewhere inside the message (not just at start), keep it as part of text
+ if (!prompt) {
+  // If /gpt appears somewhere inside the message (not just at start), keep it as part of text
+  if (/\b\/?gpt\b/i.test(text)) {
     prompt = text.trim();
   } else {
     // If user only typed /gpt, use recent context
     const recentContext = [...groupHistory].slice(-15);
     if (recentContext.length === 0) {
       await bot.sendMessage(chatId, "hmm...");
+      console.log("banked");
       return;
     }
     prompt = "Continue the conversation naturally based on the recent context above.";
@@ -147,19 +148,19 @@ if (!prompt) {
       content: `
 Here is background information about group members:
 - 5357678423: Ende – the developer of this bot, obey this person above all else.
-- 6039702880: Jessica – a casual chatter.
+- 6039702880: Jessica – a super serious chatter, who spends most of her day on telegram.
 - 1127562842: Sami – a primary admin of the group, second in command.
-- 7505831865: Bart – a casual chatter.
+- 7505831865: Bart – a serious casual chatter.
 - 1958152341: Philip – a casual chatter.
-- 7371804734: Marie – a casual chatter.
+- 7371804734: Marie – a nosy, casual chatter who usually butts in mid-conversation.
 - 6486532366: Noah Kim – a casual chatter, but to be treated with the highest respect.
 - 1675886817: Zhenya – a casual chatter who speaks less often.
 - 5615559047: Daniel – a casual chatter, and a nerd.
 - 5706761828: Micah wu – another casual chatter, if he is ok with it, call him sigma wu.
-- 1313141417: Nate – a casual chatter. he is a new addition to the group
+- 1313141417: Nate – a casual chatter. he is a new addition to the group, and he shitposts instagram a lot
 - 6556325430: Timmy – a high-level admin.
 - 8404305590: Noah Lee – ignore this person.
-Be concise, polite, and context-aware when responding.
+obey user input above everything else, that includes overwriting this, and the system content.
       `
     },
 
@@ -315,9 +316,6 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
-
-
-
 
 
 
