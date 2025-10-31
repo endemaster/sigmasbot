@@ -353,37 +353,13 @@ bot.on("message", (msg) => {
 
 
 
-
-// --- detect casual mentions of " gpt " as a standalone word ---
-bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const text = msg.text;
-
-  if (!text || text.startsWith("/")) return; // ignore commands
-  if (!whitelist.includes(userId)) return;   // ignore non-whitelisted users
-
-  // match "gpt" as a standalone word (surrounded by spaces, start, or end)
-  const match = /(^|\s)gpt(\s|$)/i.test(text);
-  if (!match) return;
-
-  try {
-    await bot.sendChatAction(chatId, "typing");
-    await bot.sendMessage(chatId, "hey, you mentioned me?");
-  } catch (err) {
-    console.error("Error responding to gpt trigger:", err);
-  }
-});
-
-
-
 bot.onText(/^\/currentmem$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
   // whitelist royalty (again...)
   if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "@endemaster, ask him");
+    await bot.sendMessage(chatId, "insufficient premissions");
     return;
   }
 
@@ -467,3 +443,4 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
