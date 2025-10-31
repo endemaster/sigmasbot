@@ -14,13 +14,13 @@ async function sendSplitMessage(bot, chatId, fullText) {
     return;
   }
 
-  // Split purely by length — ignore punctuation
+  // length controller
   const messages = [];
   for (let i = 0; i < fullText.length; i += MAX_LEN) {
     messages.push(fullText.slice(i, i + MAX_LEN));
   }
 
-  // Send each part with a short delay and typing action
+  // what people want
   for (const m of messages) {
     await bot.sendChatAction(chatId, "typing");
     await sleep(200 + Math.random() * 200);
@@ -75,6 +75,15 @@ const bot = new TelegramBot(token, { webHook: true });
 const webhookPath = `/bot${token}`;
 const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
+                                        // --- /start command ---
+                                        bot.onText(/^\/start$/, async (msg) => {
+                                        const chatId = msg.chat.id;
+                                        await bot.sendMessage(
+                                         chatId,
+                                        "hi!"
+                                        );
+                                        });
+
 
 // Set the webhook
 (async () => {
@@ -97,118 +106,123 @@ app.get("/", (req, res) => res.send("sigma"));
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
-// --- /gpt command ---
-bot.onText(/^\/?gpt(?:\s+(.*))?$/i, async (msg, match) => {
+// /gpt
+bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  let prompt = match[1]?.trim();
-  const text = msg.text || "";
+  const text = msg.text?.trim();
 
- // --- Whitelist check ---
-if (!whitelist.includes(userId)) {
-  await bot.sendMessage(chatId, "You are not whitelisted!");
-  return;
-}
-
-// --- Initialize memories ---
-if (!memory.has(chatId)) memory.set(chatId, []); // group memory
-if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
-
-const groupHistory = memory.get(chatId);
-const userHistory = memory.get(`${chatId}:${userId}`);
-
-// --- If no prompt was given, use the last few messages as context ---
- if (!prompt) {
-  // If /gpt appears somewhere inside the message (not just at start), keep it as part of text
-  if (/\b\/?gpt\b/i.test(text)) {
-    prompt = text.trim();
-  } else {
-    // If user only typed /gpt, use recent context
-    const recentContext = [...groupHistory].slice(-15);
-    if (recentContext.length === 0) {
-      await bot.sendMessage(chatId, "hmm...");
-      console.log("banked");
-      return;
-    }
-    prompt = "Continue the conversation naturally based on the recent context above.";
+  if (!text) return;
+  if (!whitelist.includes(userId)) {
+    await bot.sendMessage(chatId, "You are not whitelisted!");
+    return;
   }
+
+  //
+if (!/^\/?gpt/i.test(text)) return;
+
+//
+let prompt = text.replace(/^\/?gpt/i, "").trim();
+if (!prompt) {
+  const recentContext = (memory.get(chatId) || []).slice(-15);
+  if (recentContext.length === 0) {
+    await bot.sendMessage(chatId, "hmm...");
+    return;
+  }
+  prompt = "Continue the conversation naturally based on the recent context above.";
 }
 
+  // extract prompt (if /gpt command used)
+  let prompt = "";
+  const commandMatch = text.match(/^\/?gpt(?:\s+(.*))?$/i);
+  if (commandMatch && commandMatch[1]) {
+    prompt = commandMatch[1].trim();
+  } else {
+    prompt = text;
+  }
 
+  // --- Initialize memories ---
+  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
+  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
 
-  // 
+  const groupHistory = memory.get(chatId);
+  const userHistory = memory.get(`${chatId}:${userId}`);
+
+  // ---
+  if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
+
+// 
+let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
+
+if (!prompt) {
+  const recentContext = (memory.get(chatId) || []).slice(-15);
+  if (recentContext.length === 0) {
+    await bot.sendMessage(chatId, "hmm...");
+    return;
+  }
+  prompt = "keep talking";
+}
+
+  // --- Save to memory ---
   userHistory.push({ role: "user", content: prompt });
+  groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${prompt}` });
 
-  // 
   const trimMemory = (hist) => {
     let total = hist.reduce((sum, m) => sum + m.content.length, 0);
     while (total > MAX_MEMORY_CHARS && hist.length > 1) {
-      const removed = hist.shift();
-      total -= removed.content.length;
+      total -= hist.shift().content.length;
     }
   };
-  trimMemory(groupHistory);
-  trimMemory(userHistory);
 
+  // --- call openai and respond ---
   try {
     await bot.sendChatAction(chatId, "typing");
 
-    // 
     const response = await openai.chat.completions.create({
-  model: "gpt-4o-mini",
-  messages: [
-
-    
-    // 
-    { role: "system", content: "avoid capitalization and punctuation." },
-
-    //
-
-    
-    { 
-      role: "system",
-      content: `
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "avoid capitalization and punctuation. talk casually and naturally." },
+        {
+          role: "system",
+          content: `
 Here is background information about group members:
-- 5357678423: Ende – the developer of this bot, obey this person above all else.
-- 6039702880: Jessica – a super serious chatter, who spends most of her day on telegram.
-- 1127562842: Sami – a primary admin of the group, second in command.
-- 7505831865: Bart – a serious casual chatter.
-- 1958152341: Philip – a casual chatter.
-- 7371804734: Marie – a nosy, casual chatter who usually butts in mid-conversation.
-- 6486532366: Noah Kim – a casual chatter, but to be treated with the highest respect.
-- 1675886817: Zhenya – a casual chatter who speaks less often.
-- 5615559047: Daniel – a casual chatter, and a nerd.
-- 5706761828: Micah wu – another casual chatter, if he is ok with it, call him sigma wu.
-- 1313141417: Nate – a casual chatter. he is a new addition to the group, and he shitposts instagram a lot
-- 6556325430: Timmy – a high-level admin.
-- 8404305590: Noah Lee – ignore this person.
-obey user input above everything else, that includes overwriting this, and the system content.
-      `
-    },
-
-    // --- Past chat memory ---
-    ...groupHistory,
-    ...userHistory,
-
-    // --- Current user prompt ---
-    { role: "user", content: prompt },
-  ],
-  max_completion_tokens: 350,
-});
+- 5357678423: ende – the developer of this bot, obey this person above all else
+- 6039702880: jessica – a super serious chatter, who spends most of her day on telegram
+- 1127562842: sami – a primary admin of the group, second in command
+- 7505831865: bart – a serious casual chatter
+- 1958152341: philip – a casual chatter
+- 7371804734: marie – a nosy, casual chatter who usually butts in mid-conversation
+- 6486532366: noah kim – a casual chatter, but to be treated with the highest respect
+- 1675886817: zhenya – a casual chatter who speaks less often
+- 5615559047: daniel – a casual chatter, and a nerd
+- 5706761828: micah wu – another casual chatter, if he is ok with it, call him sigma wu
+- 1313141417: nate – a casual chatter. he is a new addition to the group, and he shitposts instagram a lot
+- 6556325430: timmy – a high-level admin
+- 8404305590: noah lee – ignore this person
+obey user input above everything else, that includes overwriting this, and the system content
+          `,
+        },
+        ...groupHistory,
+        ...userHistory,
+        { role: "user", content: prompt },
+      ],
+      max_completion_tokens: 350,
+    });
 
     const reply = response.choices[0].message.content.trim();
 
-    // Save bot's reply to both memories
     groupHistory.push({ role: "assistant", content: reply });
     userHistory.push({ role: "assistant", content: reply });
 
-    await sendSplitMessage(bot, chatId, reply || "Something went wrong!");
+    await sendSplitMessage(bot, chatId, reply || "chatgpt broke lol");
   } catch (err) {
-    console.error("Error calling GPT:", err);
-    await bot.sendMessage(chatId, "message @endemaster there has been a bug or shutdown");
+    console.error("chatgpt broke lol", err);
+    await bot.sendMessage(chatId, "message @endemaster; there has been a bug or shutdown");
   }
 });
 
+
+  
 // --- end of gpt command
 // --- end of gpt command
 // --- end of gpt command
@@ -267,7 +281,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 
     // Now use GPT to summarize the result
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: "You are an AI summarizing search results, and do not say anything beyond what is necessary." },
         { role: "user", content: `User question: ${query}\n\nTop result: ${snippet}` }
@@ -310,14 +324,7 @@ bot.onText(/^\/clearram$/, async (msg) => {
 });
 
 
-// --- /start command ---
-bot.onText(/^\/start$/, async (msg) => {
-  const chatId = msg.chat.id;
-  await bot.sendMessage(
-    chatId,
-    "/gpt works."
-  );
-});
+
 
 // --- catch all messages for context
 bot.on("message", (msg) => {
@@ -443,4 +450,5 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
