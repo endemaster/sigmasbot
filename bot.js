@@ -6,30 +6,24 @@ import OpenAI from "openai";
 // i have no idea how to code in js
 async function sendSplitMessage(bot, chatId, fullText) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const MAX_LEN = 3800; // Telegram safety limit (4096 max)
 
-  // Split text into chunks by sentence-ending punctuation (.!?)
-  const parts = fullText
-    .split(/(?<=[.!?])\s+/)
-    .filter((p) => p.trim().length > 0);
-
-  // Merge small sentences together so it sounds natural
-  const messages = [];
-  let buffer = "";
-  for (const part of parts) {
-    if ((buffer + " " + part).length < 400) { // slightly longer threshold now
-      buffer = buffer ? buffer + " " + part : part;
-    } else {
-      messages.push(buffer.trim());
-      buffer = part;
-    }
+  // If text is short, just send it
+  if (fullText.length <= MAX_LEN) {
+    await bot.sendMessage(chatId, fullText);
+    return;
   }
-  if (buffer) messages.push(buffer.trim());
 
-  // delay
+  // Split purely by length — ignore punctuation
+  const messages = [];
+  for (let i = 0; i < fullText.length; i += MAX_LEN) {
+    messages.push(fullText.slice(i, i + MAX_LEN));
+  }
+
+  // Send each part with a short delay and typing action
   for (const m of messages) {
     await bot.sendChatAction(chatId, "typing");
-    const wait = 100 + Math.random() * 100; // the delay
-    await sleep(wait);
+    await sleep(200 + Math.random() * 200);
     await bot.sendMessage(chatId, m);
   }
 }
@@ -38,7 +32,6 @@ async function sendSplitMessage(bot, chatId, fullText) {
 // --- Whitelist Configuration ---
 const whitelist = [
   5357678423, // ende
-  8076161215, // miki
   78650586, // jasperjana
   1127562842, // mrsigmaohio
   7371804734, // monkey lee
@@ -52,7 +45,6 @@ const whitelist = [
   7468269948, // luna
   1313141417, // nate
   6208934777, // jk
-  5433910777, // ezra
   6486532366, // noah kim
  
 ];
@@ -168,7 +160,7 @@ const userHistory = memory.get(`${chatId}:${userId}`);
 
     
     // 
-    { role: "system", content: "You are Sigma’s assistant. You remember user identities and past context in this chat, but stay concise, friendly, and helpful." },
+    { role: "system", content: "avoid capitalization and punctuation." },
 
     //
 
@@ -277,7 +269,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a helpful AI summarizing recent search results, but do not say anything beyond what is absolutely necessary." },
+        { role: "system", content: "You are an AI summarizing search results, and do not say anything beyond what is necessary." },
         { role: "user", content: `User question: ${query}\n\nTop result: ${snippet}` }
       ],
       max_completion_tokens: 350,
@@ -323,7 +315,7 @@ bot.onText(/^\/start$/, async (msg) => {
   const chatId = msg.chat.id;
   await bot.sendMessage(
     chatId,
-    "commands: /gpt [prompt] (direct access to chatgpt), /search [things to search for] (conducts a google search using server and uses chatgpt to summarize), /clearmem (clears memory)"
+    "/gpt works."
   );
 });
 
@@ -359,31 +351,30 @@ bot.on("message", (msg) => {
   trim(userHistory);
 });
 
+
+
+
+// --- detect casual mentions of " gpt " as a standalone word ---
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text;
 
-  // ignore system or command messages
-  if (!text || text.startsWith("/")) return;
+  if (!text || text.startsWith("/")) return; // ignore commands
+  if (!whitelist.includes(userId)) return;   // ignore non-whitelisted users
 
-  // only respond to whitelisted users
-  if (!whitelist.includes(userId)) return;
+  // match "gpt" as a standalone word (surrounded by spaces, start, or end)
+  const match = /(^|\s)gpt(\s|$)/i.test(text);
+  if (!match) return;
 
-  // check for " gpt " (with spaces) only once
-  if (text.toLowerCase().includes(" gpt ")) {
-    // prevent multiple triggers for multiple " gpt " occurrences
-    const matches = text.toLowerCase().split(" gpt ").length - 1;
-    if (matches > 1) return; // ignore if " gpt " appears more than once
-
-    try {
-      await bot.sendChatAction(chatId, "typing");
-      await bot.sendMessage(chatId, "hey, you mentioned me?");
-    } catch (err) {
-      console.error("Error responding to gpt trigger:", err);
-    }
+  try {
+    await bot.sendChatAction(chatId, "typing");
+    await bot.sendMessage(chatId, "hey, you mentioned me?");
+  } catch (err) {
+    console.error("Error responding to gpt trigger:", err);
   }
 });
+
 
 
 bot.onText(/^\/currentmem$/, async (msg) => {
@@ -414,5 +405,65 @@ bot.onText(/^\/currentmem$/, async (msg) => {
     chatId,
     `current tokens memorized is like ${totalTokens} or something idk`
   );
+
+
+
 });
 
+  
+  // --- /whitelist command ---
+bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const newId = Number(match[1]);
+
+  // only me can whitelist
+  if (userId !== 5357678423) {
+    await bot.sendMessage(chatId, "insufficient premissions");
+    console.log(`Unauthorized whitelist attempt by ${userId}`);
+    return;
+  }
+
+  if (whitelist.includes(newId)) {
+    await bot.sendMessage(chatId, `${newId} already whitelisted`);
+    return;
+  }
+
+  whitelist.push(newId);
+  await bot.sendMessage(chatId, `${newId}? sure ig.`);
+  console.log(`Added ${newId} to whitelist.`);
+});
+
+
+
+//
+//
+//
+//
+//
+
+
+
+// --- /blacklist command ---
+bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const targetId = Number(match[1]);
+
+  // again....
+  if (userId !== 5357678423) {
+    await bot.sendMessage(chatId, "insufficient premissions");
+    console.log(`Unauthorized blacklist attempt by ${userId}`);
+    return;
+  }
+
+  const index = whitelist.indexOf(targetId);
+  if (index === -1) {
+    await bot.sendMessage(chatId, `${targetId} wasn't in the whitelist the whole time`);
+    return;
+  }
+
+  whitelist.splice(index, 1);
+  await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
+  console.log(`Removed ${targetId} from whitelist.`);
+});
