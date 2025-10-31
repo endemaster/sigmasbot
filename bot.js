@@ -119,27 +119,7 @@ bot.on("message", async (msg) => {
   }
 
   //
-if (!/^\/?gpt/i.test(text)) return;
 
-//
-let prompt = text.replace(/^\/?gpt/i, "").trim();
-if (!prompt) {
-  const recentContext = (memory.get(chatId) || []).slice(-15);
-  if (recentContext.length === 0) {
-    await bot.sendMessage(chatId, "hmm...");
-    return;
-  }
-  prompt = "Continue the conversation naturally based on the recent context above.";
-}
-
-  // extract prompt (if /gpt command used)
-  let prompt = "";
-  const commandMatch = text.match(/^\/?gpt(?:\s+(.*))?$/i);
-  if (commandMatch && commandMatch[1]) {
-    prompt = commandMatch[1].trim();
-  } else {
-    prompt = text;
-  }
 
   // --- Initialize memories ---
   if (!memory.has(chatId)) memory.set(chatId, []); // group memory
@@ -450,5 +430,6 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
