@@ -84,6 +84,17 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         );
                                         });
 
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+  const name = msg.from.username || msg.from.first_name || "unknown";
+  const text = msg.text || "[non-text message]";
+  const timestamp = new Date().toISOString();
+
+  // --- Log every message for moderation ---
+  console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
+});
+
 
 // Set the webhook
 (async () => {
@@ -430,6 +441,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
 
