@@ -123,12 +123,6 @@ bot.on("message", async (msg) => {
   const userId = msg.from.id;
   const text = msg.text?.trim();
 
-  if (!text) return;
-  if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "You are not whitelisted!");
-    return;
-  }
-
   //
 
 
@@ -141,6 +135,13 @@ bot.on("message", async (msg) => {
 
   // ---
   if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
+
+
+  // check for whitelist
+    if (!whitelist.includes(userId)) {
+    await bot.sendMessage(chatId, "You are not whitelisted!");
+    return;
+  }
 
 // 
 let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
@@ -441,6 +442,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
 
