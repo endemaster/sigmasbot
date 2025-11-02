@@ -378,7 +378,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   //
   await bot.sendMessage(
     chatId,
-    `current tokens memorized is like ${totalChars} or something idk`
+    `current characters memorized is like ${totalChars} or something idk`
   );
 
 
@@ -442,6 +442,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
 
