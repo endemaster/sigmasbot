@@ -368,10 +368,9 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   const userHistory = memory.get(`${chatId}:${userId}`) || [];
 
   // --- estimate tokens ---
-  // (approximation: 1 token ≈ 4 chars for English text)
   const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
   const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
-  const totalTokens = Math.round((groupChars + userChars) / 4);
+  const totalChars = groupChars + userChars;
 
   // --- log event ---
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
@@ -379,7 +378,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   //
   await bot.sendMessage(
     chatId,
-    `current tokens memorized is like ${totalTokens} or something idk`
+    `current tokens memorized is like ${totalChars} or something idk`
   );
 
 
@@ -443,6 +442,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
 
