@@ -46,6 +46,7 @@ const whitelist = [
   1313141417, // nate
   6208934777, // jk
   6486532366, // noah kim
+  1134533214, // charles
  
 ];
 
@@ -442,6 +443,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
 });
+
 
 
 
