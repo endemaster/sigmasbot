@@ -95,7 +95,7 @@ bot.on("message", async (msg) => {
   // --- Log every message for moderation ---
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
   bot.sendMessage(
-  -3261872115,
+  -1003261872115,
   `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
 );
 
@@ -251,7 +251,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
    try {
     await bot.sendChatAction(chatId, "typing");
      console.log(`/search was done by ${userId}`)
-     bot.sendMessage(-3261872115, `/search was done by ${userId}`);
+     bot.sendMessage(-1003261872115, `/search was done by ${userId}`);
 
     // --- Memory setup (like in /gpt) ---
       if (!memory.has(chatId)) memory.set(chatId, []);
@@ -306,7 +306,7 @@ bot.onText(/^\/clearmem$/, (msg) => {
   }
 
   memory.delete(chatId);
-  bot.sendMessage(-3261872115, "cleared mem");
+  bot.sendMessage(-1003261872115, "cleared mem");
 });
 
 
@@ -321,7 +321,7 @@ bot.onText(/^\/clearram$/, async (msg) => {
 
   memory.clear();
   console.log("memory cleared by admin");
-  bot.sendMessage(-3261872115, "cleared ram");
+  bot.sendMessage(-1003261872115, "cleared ram");
 });
 
 
@@ -383,7 +383,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   // --- log event ---
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   bot.sendMessage(
-  -3261872115,
+  -1003261872115,
   `${msg.from.first_name} (${userId}) checked current memory tokens`
 );
 
@@ -409,7 +409,7 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
     console.log(`Unauthorized whitelist attempt by ${userId}`);
-    bot.sendMessage(-3261872115, `Unauthorized whitelist attempt by ${userId}`);
+    bot.sendMessage(-1003261872115, `Unauthorized whitelist attempt by ${userId}`);
     return;
   }
 
@@ -421,7 +421,7 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   whitelist.push(newId);
   await bot.sendMessage(chatId, `${newId}? sure ig.`);
   console.log(`Added ${newId} to whitelist.`);
-  bot.sendMessage(-3261872115, `added ${newId} to whitelist`);
+  bot.sendMessage(-1003261872115, `added ${newId} to whitelist`);
 });
 
 
@@ -444,7 +444,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
     console.log(`Unauthorized blacklist attempt by ${userId}`);
-    bot.sendMessage(-3261872115, `Unauthorized blacklist attempt by ${userId}`);
+    bot.sendMessage(-1003261872115, `Unauthorized blacklist attempt by ${userId}`);
     return;
   }
 
@@ -457,8 +457,9 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   whitelist.splice(index, 1);
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
-bot.sendMessage(-3261872115, `removed ${targetId} from whitelist`);
+bot.sendMessage(-1003261872115, `removed ${targetId} from whitelist`);
 
 });
+
 
 
