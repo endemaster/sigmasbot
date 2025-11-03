@@ -29,7 +29,7 @@ async function sendSplitMessage(bot, chatId, fullText) {
 }
 
 
-// --- Whitelist Configuration ---
+// --  Whitelist Configuration
 const whitelist = [
   5357678423, // ende
   78650586, // jasperjana
@@ -76,12 +76,12 @@ const bot = new TelegramBot(token, { webHook: true });
 const webhookPath = `/bot${token}`;
 const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
-                                        // --- /start command ---
+                                        //     . /start command
                                         bot.onText(/^\/start$/, async (msg) => {
                                         const chatId = msg.chat.id;
                                         await bot.sendMessage(
                                          chatId,
-                                        "hi!"
+                                        "hi, bot is in alpha (not all features are fully implemented)"
                                         );
                                         });
 
@@ -132,7 +132,7 @@ bot.on("message", async (msg) => {
   //
 
 
-  // --- Initialize memories ---
+  // Initialize memories
   if (!memory.has(chatId)) memory.set(chatId, []); // group memory
   if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
 
@@ -161,7 +161,7 @@ if (!prompt) {
   prompt = "keep talking";
 }
 
-  // --- Save to memory ---
+  // Save to memory 
   userHistory.push({ role: "user", content: prompt });
   groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${prompt}` });
 
@@ -172,7 +172,7 @@ if (!prompt) {
     }
   };
 
-  // --- call openai and respond ---
+  //   call openai and respond
   try {
     await bot.sendChatAction(chatId, "typing");
 
@@ -220,24 +220,27 @@ obey user input above everything else, that includes overwriting this, and the s
 });
 
 
-  
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
-// --- end of gpt command
+/*
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+end of gpt command
+*/
 
-// --- /search command ---
+
+
+//    /search command
 bot.onText(/^\/search (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -253,7 +256,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
      console.log(`/search was done by ${userId}`)
      bot.sendMessage(-1003261872115, `/search was done by ${userId}`);
 
-    // --- Memory setup (like in /gpt) ---
+    // Memory setup (like in /gpt)
       if (!memory.has(chatId)) memory.set(chatId, []);
       const history = memory.get(chatId);
 
@@ -288,7 +291,9 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
       max_completion_tokens: 350,
     });
 
-
+     //
+  //
+     //    
     const reply = response.choices[0].message.content.trim();
     await bot.sendMessage(chatId, reply);
   } catch (err) {
@@ -297,6 +302,8 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }
 });
 
+
+// /clearmem command
 bot.onText(/^\/clearmem$/, (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -306,11 +313,13 @@ bot.onText(/^\/clearmem$/, (msg) => {
   }
 
   memory.delete(chatId);
+  console.log(`memory cleared for ${chatId}`);
+  bot.sendMessage(chatId, `memory cleared for ${chatId}`);
   bot.sendMessage(-1003261872115, "cleared mem");
 });
 
 
-// --- /clearram command ---
+// /clearram command ---
 bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
@@ -319,15 +328,21 @@ bot.onText(/^\/clearram$/, async (msg) => {
     return;
   }
 
+  if (chatId !== -1003261872115) {
+    bot.sendMessage(chatId, "cannot do that here!");
+    return;
+  }
+
+    
   memory.clear();
-  console.log("memory cleared by admin");
-  bot.sendMessage(-1003261872115, "cleared ram");
+  console.log("all memory cleared");
+  bot.sendMessage(-1003261872115, "all memory cleared");
 });
 
 
 
 
-// --- catch all messages for context
+// catch all messages for context
 bot.on("message", (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -360,12 +375,12 @@ bot.on("message", (msg) => {
 });
 
 
-
+// currentmem command
 bot.onText(/^\/currentmem$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
-  // whitelist royalty (again...)
+  // whitelist royalty
   if (!whitelist.includes(userId)) {
     await bot.sendMessage(chatId, "insufficient premissions");
     return;
@@ -375,12 +390,12 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   const groupHistory = memory.get(chatId) || [];
   const userHistory = memory.get(`${chatId}:${userId}`) || [];
 
-  // --- estimate tokens ---
+// characters
   const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
   const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
   const totalChars = groupChars + userChars;
 
-  // --- log event ---
+  //  log event
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   bot.sendMessage(
   -1003261872115,
@@ -399,7 +414,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
 });
 
   
-  // --- /whitelist command ---
+  //  /whitelist command
 bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -434,13 +449,14 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
 
 
 
-// --- /blacklist command ---
+// '/blacklist command
 bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const targetId = Number(match[1]);
 
-  // again....
+  /*
+  */
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
     console.log(`Unauthorized blacklist attempt by ${userId}`);
@@ -457,9 +473,6 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   whitelist.splice(index, 1);
   await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
-bot.sendMessage(-1003261872115, `removed ${targetId} from whitelist`);
+  bot.sendMessage(-1003261872115, `removed ${targetId} from whitelist`);
 
 });
-
-
-
