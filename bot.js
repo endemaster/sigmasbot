@@ -362,17 +362,25 @@ bot.on("message", (msg) => {
   userHistory.push({ role: "user", content: text });
 
   // Trim both
-  const trim = (hist) => {
-    let total = hist.reduce((sum, m) => sum + m.content.length, 0);
-    while (total > MAX_MEMORY_CHARS && hist.length > 1) {
-      const removed = hist.shift();
+ const trim = (hist) => {
+  if (!Array.isArray(hist)) return;
+
+  let total = 0;
+  for (const m of hist) {
+    if (m && typeof m.content === "string") {
+      total += m.content.length;
+    }
+  }
+
+  while (total > MAX_MEMORY_CHARS && hist.length > 1) {
+    const removed = hist.shift();
+    if (removed && typeof removed.content === "string") {
       total -= removed.content.length;
     }
-  };
-  trim(groupHistory);
-  trim(userHistory);
-});
-
+  }
+};
+trim(groupHistory);
+trim(userHistory);
 
 // currentmem command
 bot.onText(/^\/currentmem$/, async (msg) => {
@@ -649,4 +657,5 @@ bot.on("message", async (msg) => {
     }
   }
 });
+
 
