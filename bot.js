@@ -531,7 +531,93 @@ bot.on("message", async (msg) => {
 
 
     return;
+  }});
+
+
+  // haha
+const muted = new Map();
+
+bot.onText(/^\/mute\s+(\d+)\s+(-?\d+)$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const targetId = Number(match[1]);
+  const targetGroup = Number(match[2]);
+
+  // initialize the group set
+  if (!muted.has(targetGroup)) muted.set(targetGroup, new Set());
+
+  muted.get(targetGroup).add(targetId);
+
+  // logs
+  console.log(`Muted ${targetId} in group ${targetGroup}`);
+  bot.sendMessage(-1003261872115, `${msg.from.id} muted ${targetId} in ${targetGroup}`);
+});
+
+// invalid usage
+bot.onText(/^\/mute$/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, "format wrong");
+});
+
+// delete messages from muted users
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  if (muted.has(chatId) && muted.get(chatId).has(userId)) {
+    try {
+      await bot.deleteMessage(chatId, msg.message_id);
+      console.log(`Deleted message from muted user ${userId} in ${chatId}`);
+      bot.sendMessage(-1003261872115, `Deleted message from muted user ${userId} in ${chatId}`);
+    } catch (err) {
+      console.error(`Failed to delete message from ${userId}:`, err.message);
+      bot.sendMessage(-1003261872115, `Failed to delete message from ${userId}:`, err.message);
+    }
+    return;
+  }
+});
+
+
+
+
+// mute but more evil
+const globallyMuted = new Set();
+const mute = "mute";
+
+//
+bot.onText(/^\/gmute\s+(\S+)\s+(\d+)$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const password = match[1].trim();
+  const targetId = Number(match[2]);
+
+  if (password !== mute) {
+    await bot.sendMessage(chatId, "why u tryna mute people?");
+    return;
   }
 
-  // 
+  globallyMuted.add(targetId);
+
+// invalid usage
+bot.onText(/^\/gmute$/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, "why u tryna mute people?");
 });
+
+// delete messages
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from.id;
+
+  if (globallyMuted.has(userId)) {
+    try {
+      await bot.deleteMessage(chatId, msg.message_id);
+      console.log(`Deleted message from muted user ${userId} in ${chatId}`);
+      bot.sendMessage(-1003261872115, `Deleted message from muted user ${userId} in ${chatId}`);
+    } catch (err) {
+      console.error(`Failed to delete message from ${userId}:`, err.message);
+      bot.sendMessage(-1003261872115, `Failed to delete message from ${userId}:`, err.message);
+    }
+    return;
+  }
+});
+
+
