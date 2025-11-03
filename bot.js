@@ -409,7 +409,7 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
     console.log(`Unauthorized whitelist attempt by ${userId}`);
-    bot.sendMessage(-3261872115, "Unauthorized whitelist attempt by "+${userId});
+    bot.sendMessage(-3261872115, `Unauthorized whitelist attempt by ${userId}`);
     return;
   }
 
@@ -421,7 +421,7 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   whitelist.push(newId);
   await bot.sendMessage(chatId, `${newId}? sure ig.`);
   console.log(`Added ${newId} to whitelist.`);
-  bot.sendMessage(-3261872115, "added "+ ${newId}+" to whitelist");
+  bot.sendMessage(-3261872115, `added ${newId} to whitelist`);
 });
 
 
@@ -444,7 +444,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
     console.log(`Unauthorized blacklist attempt by ${userId}`);
-    bot.sendMessage(-3261872115, "Unauthorized blacklist attempt by "+${userId});
+    bot.sendMessage(-3261872115, `Unauthorized blacklist attempt by ${userId}`);
     return;
   }
 
@@ -460,12 +460,5 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
 bot.sendMessage(-3261872115, `removed ${targetId} from whitelist`);
 
 });
-
-
-
-
-
-
-
 
 
