@@ -334,6 +334,8 @@ bot.onText(/^\/clearram$/, async (msg) => {
 
     
   memory.clear();
+  muted.clear();
+  globallyMuted.clear();
   console.log("all memory cleared");
   bot.sendMessage(-1003261872115, "all memory cleared");
 });
@@ -647,3 +649,4 @@ bot.on("message", async (msg) => {
     }
   }
 });
+
