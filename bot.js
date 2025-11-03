@@ -619,5 +619,7 @@ bot.on("message", async (msg) => {
     return;
   }
 });
+});
+
 
 
