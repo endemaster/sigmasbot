@@ -381,7 +381,8 @@ bot.on("message", (msg) => {
 };
 trim(groupHistory);
 trim(userHistory);
-
+});
+  
 // currentmem command
 bot.onText(/^\/currentmem$/, async (msg) => {
   const chatId = msg.chat.id;
@@ -657,5 +658,6 @@ bot.on("message", async (msg) => {
     }
   }
 });
+
 
 
