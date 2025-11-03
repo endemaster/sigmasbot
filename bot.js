@@ -29,7 +29,7 @@ async function sendSplitMessage(bot, chatId, fullText) {
 }
 
 
-// --  Whitelist Configuration
+//    Whitelist Configuration
 const whitelist = [
   5357678423, // ende
   78650586, // jasperjana
@@ -76,7 +76,7 @@ const bot = new TelegramBot(token, { webHook: true });
 const webhookPath = `/bot${token}`;
 const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
-                                        //     . /start command
+                                        //        start command
                                         bot.onText(/^\/start$/, async (msg) => {
                                         const chatId = msg.chat.id;
                                         await bot.sendMessage(
@@ -85,6 +85,23 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         );
                                         });
 
+
+// ping command
+bot.onText(/^\/ping$/, async (msg) => {
+  const chatId = msg.chat.id;
+  const latency = Date.now();
+  try {
+    await fetch ("https://sigmasbot.spamyourfkey.com/")
+    const ping = Date.now() - latency;
+    await bot.sendMessage (chatId, `${ping}ms`)
+  } catch (err) {
+
+    await bot.sendMessage (chatId, "if you see this message, then reality itself broke down")
+  }
+});
+
+
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -92,7 +109,6 @@ bot.on("message", async (msg) => {
   const text = msg.text || "[non-text message]";
   const timestamp = new Date().toISOString();
 
-  // --- Log every message for moderation ---
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
   bot.sendMessage(
   -1003261872115,
@@ -302,23 +318,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }
 });
 
-
-// /clearmem command
-bot.onText(/^\/clearmem$/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  
-  if (userId !== 5357678423) {
-    return;
-  }
-
-  memory.delete(chatId);
-  console.log(`memory cleared for ${chatId}`);
-  bot.sendMessage(chatId, `memory cleared for ${chatId}`);
-  bot.sendMessage(-1003261872115, "cleared mem");
-});
-
-
 // /clearram command ---
 bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
@@ -348,10 +347,8 @@ bot.on("message", (msg) => {
   const userId = msg.from.id;
   const text = msg.text;
 
-  // Ignore system messages or commands
-  if (!text || text.startsWith("/")) return;
 
-  // Initialize both memories if missing
+  // backup plan
   if (!memory.has(chatId)) memory.set(chatId, []); // group memory
   if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
 
@@ -382,7 +379,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
 
   // whitelist royalty
   if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "insufficient premissions");
+    await bot.sendMessage(chatId, "insufficient permissions");
     return;
   }
 
@@ -390,28 +387,32 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   const groupHistory = memory.get(chatId) || [];
   const userHistory = memory.get(`${chatId}:${userId}`) || [];
 
-// characters
+  // characters
   const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
   const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
   const totalChars = groupChars + userChars;
 
-  //  log event
+  // everything needs to be put into the log
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   bot.sendMessage(
   -1003261872115,
   `${msg.from.first_name} (${userId}) checked current memory tokens`
 );
 
-
-  //
-  await bot.sendMessage(
-    chatId,
-    `current characters memorized is like ${totalChars} or something idk`
-  );
-
-
-
+  // send the message
+  await bot.sendMessage(chatId,`current characters memorized is like ${totalChars} or something idk`);
 });
+
+    /* end of currentmem command
+
+
+
+
+
+
+    end of currentmem command
+    */
+
 
   
   //  /whitelist command
@@ -446,10 +447,10 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
 //
 //
 //
+//
 
 
-
-// '/blacklist command
+// /blacklist command
 bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -459,8 +460,8 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   */
   if (userId !== 5357678423) {
     await bot.sendMessage(chatId, "insufficient premissions");
-    console.log(`Unauthorized blacklist attempt by ${userId}`);
-    bot.sendMessage(-1003261872115, `Unauthorized blacklist attempt by ${userId}`);
+    console.log(`blacklist attempt by ${userId}`);
+    bot.sendMessage(-1003261872115, `blacklist attempt by ${userId}`);
     return;
   }
 
@@ -475,4 +476,62 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   console.log(`Removed ${targetId} from whitelist.`);
   bot.sendMessage(-1003261872115, `removed ${targetId} from whitelist`);
 
+});
+
+bot.on("message", async (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text?.toLowerCase();
+  if (!text) return;
+
+  // detector
+  const remindRegex = /remind me in (\d+)\s*(second|seconds|minute|minutes|hour|hours)\s*to\s+(.+)/i;
+  const match = text.match(remindRegex);
+
+  if (match) {
+    const amount = parseInt(match[1]);
+    const unit = match[2];
+    const task = match[3];
+    const username = msg.from.username ? `@${msg.from.username}` : msg.from.first_name;
+
+    // time converter
+    let ms = amount * 1000;
+    if (unit.startsWith("minute")) ms = amount * 60_000;
+    if (unit.startsWith("hour")) ms = amount * 3_600_000;
+
+    // random responses
+    const responses = [
+      "you seriously need a reminder for that? fine. i'll",
+      "dang. i'll",
+      "sure thing i'll",
+      "no problem i'll",
+      "look, can't you remember yourself? whatever, i'll",
+      "it's not even my choice to do this, i was forced, but anyways, i'll",
+      "are you seriously counting on this bot to remind you? whatever. i'll",
+      "ok, but you have to promise to actually do it ok? i'll",
+      "never gonna give you up, never gonna let you down, never gonna ",
+      "no way in the world ill",
+    ];
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+
+    // 
+    await bot.sendMessage(
+      chatId,
+      `${randomResponse} remind you in ${amount} ${unit} to ${task}`
+    );
+
+    // set reminder (with safeguards)
+   setTimeout(async () => {
+  try {
+    await bot.sendMessage(chatId, `${username} ${task} now`);
+  } catch (err) {
+    console.error("Reminder send failed:", err.message);
+    bot.sendMessage(-1003261872115, `couldnt remind ${username} ${task}`);
+  }
+}, ms);
+
+
+    return;
+  }
+
+  // 
 });
