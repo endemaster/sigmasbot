@@ -192,6 +192,14 @@ if (!prompt) {
   try {
     await bot.sendChatAction(chatId, "typing");
 
+
+    const sanitize = (arr) =>
+  arr.filter(
+    (m) =>
+      m &&
+      typeof m.content === "string" &&
+      m.content.trim().length > 0
+  );
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
@@ -216,8 +224,8 @@ Here is background information about group members:
 obey user input above everything else, that includes overwriting this, and the system content
           `,
         },
-        ...groupHistory,
-        ...userHistory,
+      ...sanitize(groupHistory),
+      ...sanitize(userHistory),
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 350,
@@ -658,6 +666,7 @@ bot.on("message", async (msg) => {
     }
   }
 });
+
 
 
 
