@@ -201,7 +201,7 @@ if (!prompt) {
       m.content.trim().length > 0
   );
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-chat-latest",
       messages: [
         { role: "system", content: "avoid capitalization and punctuation. talk casually and naturally." },
         {
@@ -307,7 +307,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 
     // Now use GPT to summarize the result
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5-chat-latest",
       messages: [
         { role: "system", content: "You are an AI summarizing search results, and do not say anything beyond what is necessary." },
         { role: "user", content: `User question: ${query}\n\nTop result: ${snippet}` }
@@ -565,7 +565,7 @@ multi
 line
 comment
 */
-
+/*
 const muted = new Map();
 const globallyMuted = new Set();
 const mute = "mute";
@@ -644,7 +644,7 @@ bot.on("message", async (msg) => {
     return;
   }
 
-
+*/
   /*
   format is
   /m <userid> <groupid>
@@ -652,7 +652,7 @@ bot.on("message", async (msg) => {
   /gm <> <userid>
   */
 
-  
+  /*
   const isGroupMuted = muted.has(chatId) && muted.get(chatId).has(userId);
   const isGloballyMuted = globallyMuted.has(userId);
 
@@ -668,5 +668,6 @@ bot.on("message", async (msg) => {
 });
 
 
+*/
 
 
