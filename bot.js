@@ -4,30 +4,35 @@ import OpenAI from "openai";
 
 
 // i have no idea how to code in js
+async function safeSend(bot, chatId, text, opts) {
+  try {
+    await bot.sendMessage(chatId, text, opts);
+  } catch (err) {
+    console.error(`Send failed to ${chatId}:`, err.message);
+  }
+}
+
+
 async function sendSplitMessage(bot, chatId, fullText) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const MAX_LEN = 3800; // Telegram safety limit (4096 max)
+  const MAX_LEN = 3800; // Telegram limit is 4096 chars per message
 
-  // If text is short, just send it
   if (fullText.length <= MAX_LEN) {
-    await bot.sendMessage(chatId, fullText);
+    await safeSend(bot, chatId, fullText);
     return;
   }
 
-  // length controller
   const messages = [];
   for (let i = 0; i < fullText.length; i += MAX_LEN) {
     messages.push(fullText.slice(i, i + MAX_LEN));
   }
 
-  // what people want
   for (const m of messages) {
     await bot.sendChatAction(chatId, "typing");
     await sleep(200 + Math.random() * 200);
-    await bot.sendMessage(chatId, m);
+    await safeSend(bot, chatId, m);
   }
 }
-
 
 //    Whitelist Configuration
 const whitelist = [
@@ -73,13 +78,20 @@ app.use(express.json());
 
 // Initialize bot (webhook mode)
 const bot = new TelegramBot(token, { webHook: true });
+
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled rejection:", err);
+});
+bot.on("polling_error", (err) => console.error("Polling error:", err));
+bot.on("webhook_error", (err) => console.error("Webhook error:", err));
+
 const webhookPath = `/bot${token}`;
 const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
                                         //        start command
                                         bot.onText(/^\/start$/, async (msg) => {
                                         const chatId = msg.chat.id;
-                                        await bot.sendMessage(
+                                        await safeSend(bot,
                                          chatId,
                                         "hi, bot is in alpha (not all features are fully implemented)"
                                         );
@@ -93,10 +105,10 @@ bot.onText(/^\/ping$/, async (msg) => {
   try {
     await fetch ("https://sigmasbot.spamyourfkey.com/")
     const ping = Date.now() - latency;
-    await bot.sendMessage (chatId, `${ping}ms`)
+    await safeSend (bot, chatId, `${ping}ms`)
   } catch (err) {
 
-    await bot.sendMessage (chatId, "if you see this message, then reality itself broke down")
+    await safeSend (bot, chatId, "if you see this message, then reality itself broke down")
   }
 });
 
@@ -110,7 +122,7 @@ bot.on("message", async (msg) => {
   const timestamp = new Date().toISOString();
 
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
-  bot.sendMessage(
+  safeSend(bot,
   -1003261872115,
   `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
 );
@@ -161,7 +173,7 @@ bot.on("message", async (msg) => {
 
   // check for whitelist
     if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "You are not whitelisted!");
+    await safeSend(bot, chatId, "You are not whitelisted!");
     return;
   }
 
@@ -171,7 +183,7 @@ let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
 if (!prompt) {
   const recentContext = (memory.get(chatId) || []).slice(-15);
   if (recentContext.length === 0) {
-    await bot.sendMessage(chatId, "hmm...");
+    await safeSend(bot, chatId, "hmm...");
     return;
   }
   prompt = "keep talking";
@@ -239,7 +251,7 @@ obey user input above everything else, that includes overwriting this, and the s
     await sendSplitMessage(bot, chatId, reply || "chatgpt broke lol");
   } catch (err) {
     console.error("chatgpt broke lol", err);
-    await bot.sendMessage(chatId, "message @endemaster; there has been a bug or shutdown");
+    await safeSend(bot, chatId, "message @endemaster; there has been a bug or shutdown");
   }
 });
 
@@ -271,14 +283,14 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   const query = match[1];
 
   if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "You are not whitelisted!");
+    await safeSend(bot, chatId, "You are not whitelisted!");
     return;
   }
 
    try {
     await bot.sendChatAction(chatId, "typing");
      console.log(`/search was done by ${userId}`)
-     bot.sendMessage(-1003261872115, `/search was done by ${userId}`);
+     safeSend(bot,-1003261872115, `/search was done by ${userId}`);
 
     // Memory setup (like in /gpt)
       if (!memory.has(chatId)) memory.set(chatId, []);
@@ -319,10 +331,10 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   //
      //    
     const reply = response.choices[0].message.content.trim();
-    await bot.sendMessage(chatId, reply);
+    await safeSend(bot, chatId, reply);
   } catch (err) {
     console.error("Error in /search:", err);
-    await bot.sendMessage(chatId, "umm.... well i cant get anything... but its n- not my fault! google went down for me!");
+    await safeSend(bot, chatId, "umm.... well i cant get anything... but its n- not my fault! google went down for me!");
   }
 });
 
@@ -336,7 +348,7 @@ bot.onText(/^\/clearram$/, async (msg) => {
   }
 
   if (chatId !== -1003261872115) {
-    bot.sendMessage(chatId, "cannot do that here!");
+    safeSend(bot, chatId, "cannot do that here!");
     return;
   }
 
@@ -345,7 +357,7 @@ bot.onText(/^\/clearram$/, async (msg) => {
   muted.clear();
   globallyMuted.clear();
   console.log("all memory cleared");
-  bot.sendMessage(-1003261872115, "all memory cleared");
+  safeSend(bot,-1003261872115, "all memory cleared");
 });
 
 
@@ -398,7 +410,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
 
   // whitelist royalty
   if (!whitelist.includes(userId)) {
-    await bot.sendMessage(chatId, "insufficient permissions");
+    await safeSend(bot, chatId, "insufficient permissions");
     return;
   }
 
@@ -413,13 +425,13 @@ bot.onText(/^\/currentmem$/, async (msg) => {
 
   // everything needs to be put into the log
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
-  bot.sendMessage(
+  safeSend(bot,
   -1003261872115,
   `${msg.from.first_name} (${userId}) checked current memory tokens`
 );
 
   // send the message
-  await bot.sendMessage(chatId,`current characters memorized is like ${totalChars} or something idk`);
+  await safeSend(bot, chatId,`current characters memorized is like ${totalChars} or something idk`);
 });
 
     /* end of currentmem command
@@ -442,21 +454,21 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
 
   // only me can whitelist
   if (userId !== 5357678423) {
-    await bot.sendMessage(chatId, "insufficient premissions");
+    await safeSend(bot, chatId, "insufficient premissions");
     console.log(`Unauthorized whitelist attempt by ${userId}`);
-    bot.sendMessage(-1003261872115, `Unauthorized whitelist attempt by ${userId}`);
+    safeSend(bot,-1003261872115, `Unauthorized whitelist attempt by ${userId}`);
     return;
   }
 
   if (whitelist.includes(newId)) {
-    await bot.sendMessage(chatId, `${newId} already whitelisted`);
+    await safeSend(bot, chatId, `${newId} already whitelisted`);
     return;
   }
 
   whitelist.push(newId);
-  await bot.sendMessage(chatId, `${newId}? sure ig.`);
+  await safeSend(bot, chatId, `${newId}? sure ig.`);
   console.log(`Added ${newId} to whitelist.`);
-  bot.sendMessage(-1003261872115, `added ${newId} to whitelist`);
+  safeSend(bot,-1003261872115, `added ${newId} to whitelist`);
 });
 
 
@@ -478,22 +490,22 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   /*
   */
   if (userId !== 5357678423) {
-    await bot.sendMessage(chatId, "insufficient premissions");
+    await safeSend(bot, chatId, "insufficient premissions");
     console.log(`blacklist attempt by ${userId}`);
-    bot.sendMessage(-1003261872115, `blacklist attempt by ${userId}`);
+    safeSend(bot,-1003261872115, `blacklist attempt by ${userId}`);
     return;
   }
 
   const index = whitelist.indexOf(targetId);
   if (index === -1) {
-    await bot.sendMessage(chatId, `${targetId} wasn't in the whitelist the whole time`);
+    await safeSend(bot, chatId, `${targetId} wasn't in the whitelist the whole time`);
     return;
   }
 
   whitelist.splice(index, 1);
-  await bot.sendMessage(chatId, `${targetId}'s premissions has been chopped`);
+  await safeSend(bot, chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
-  bot.sendMessage(-1003261872115, `removed ${targetId} from whitelist`);
+  safeSend(bot,-1003261872115, `removed ${targetId} from whitelist`);
 
 });
 
@@ -533,7 +545,7 @@ bot.on("message", async (msg) => {
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
     // 
-    await bot.sendMessage(
+    await safeSend(bot,
       chatId,
       `${randomResponse} remind you in ${amount} ${unit} to ${task}`
     );
@@ -541,10 +553,10 @@ bot.on("message", async (msg) => {
     // set reminder (with safeguards)
    setTimeout(async () => {
   try {
-    await bot.sendMessage(chatId, `${username} ${task} now`);
+    await safeSend(bot, chatId, `${username} ${task} now`);
   } catch (err) {
     console.error("Reminder send failed:", err.message);
-    bot.sendMessage(-1003261872115, `couldnt remind ${username} ${task}`);
+    safeSend(bot,-1003261872115, `couldnt remind ${username} ${task}`);
   }
 }, ms);
 
@@ -580,8 +592,8 @@ bot.onText(/^\/mute\s+(\d+)\s+(-?\d+)$/, async (msg, match) => {
   muted.get(targetGroup).add(targetId);
 
   console.log(`Muted ${targetId} in group ${targetGroup} (by ${userId})`);
-  bot.sendMessage(-1003261872115, `${userId} muted ${targetId} in ${targetGroup}`);
-  await bot.sendMessage(chatId, `user ${targetId} muted in group ${targetGroup}`);
+  safeSend(bot,-1003261872115, `${userId} muted ${targetId} in ${targetGroup}`);
+  await safeSend(bot, chatId, `user ${targetId} muted in group ${targetGroup}`);
 });
 
 bot.onText(/^\/gmute\s+(\S+)\s+(\d+)$/, async (msg, match) => {
@@ -591,13 +603,13 @@ bot.onText(/^\/gmute\s+(\S+)\s+(\d+)$/, async (msg, match) => {
   const targetId = Number(match[2]);
 
   if (password !== mute) {
-    bot.sendMessage(-1003261872115, `wrong /gmute password attempt by ${userId}`);
+    safeSend(bot,-1003261872115, `wrong /gmute password attempt by ${userId}`);
     return;
   }
 
   globallyMuted.add(targetId);
   console.log(`Globally muted ${targetId} (by ${userId})`);
-  bot.sendMessage(-1003261872115, `${userId} used /gmute on ${targetId}`);
+  safeSend(bot,-1003261872115, `${userId} used /gmute on ${targetId}`);
 });
 
 
@@ -608,7 +620,7 @@ bot.onText(/^\/unmute\s+(\S+)\s+(\d+)$/, async (msg, match) => {
   const targetId = Number(match[2]);
 
   if (password !== mute) {
-    bot.sendMessage(-1003261872115, `wrong /unmute password attempt by ${userId}`);
+    safeSend(bot,-1003261872115, `wrong /unmute password attempt by ${userId}`);
     return;
   }
 
@@ -618,7 +630,7 @@ bot.onText(/^\/unmute\s+(\S+)\s+(\d+)$/, async (msg, match) => {
   globallyMuted.delete(targetId);
 
   console.log(`Unmuted ${targetId} (by ${userId})`);
-  bot.sendMessage(-1003261872115, `${userId} unmuted ${targetId}`);
+  safeSend(bot,-1003261872115, `${userId} unmuted ${targetId}`);
 });
 
 
@@ -635,7 +647,7 @@ bot.on("message", async (msg) => {
     if (!muted.has(chatId)) muted.set(chatId, new Set());
     muted.get(chatId).add(userId);
     console.log(`Auto-muted bot ${userId} in ${chatId}`);
-    bot.sendMessage(-1003261872115, `Auto-muted bot ${userId} in ${chatId}`);
+    safeSend(bot,-1003261872115, `Auto-muted bot ${userId} in ${chatId}`);
     try {
       await bot.deleteMessage(chatId, msg.message_id);
     } catch (err) {
@@ -660,14 +672,13 @@ bot.on("message", async (msg) => {
     try {
       await bot.deleteMessage(chatId, msg.message_id);
       console.log(`Deleted message from muted user ${userId} in ${chatId}`);
-      bot.sendMessage(-1003261872115, `Deleted message from muted user ${userId} in ${chatId}`);
+      safeSend(bot,-1003261872115, `Deleted message from muted user ${userId} in ${chatId}`);
     } catch (err) {
       console.error(`Failed to delete message from ${userId}:`, err.message);
     }
   }
 });
-
-
 */
+
 
 
