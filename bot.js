@@ -37,25 +37,19 @@ async function sendSplitMessage(bot, chatId, fullText) {
   }
 }
 
-// PUT WHITELIST HERE!!!!
-
+import { whitelist } from "./whitelist.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- memory ---
-const memory = new Map(); // userId -> conversation array
+// memory
+const memory = new Map();
 const MAX_MEMORY_CHARS = 100000; // characters
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
 const port = process.env.PORT || 10000;
-
-if (!token) {
-  console.error("Missing BOT_TOKEN in environment variables");
-  process.exit(1);
-}
 
 const app = express();
 app.use(express.json());
@@ -77,7 +71,7 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         const chatId = msg.chat.id;
                                         await safeSend(bot,
                                          chatId,
-               "hi, bot is in alpha (not all features are fully implemented); you can visit sigmasbot.spamyourfkey.com for documentation."
+           "hi, bot is in alpha (not all features are fully implemented); you can visit sigmasbot.spamyourfkey.com for documentation and TOS."
                                         );
                                         });
 
@@ -149,7 +143,7 @@ dont use punctuation
 generate playful roasts that feel personal
 roast the user based entirely on their message history personality patterns writing style and vibe
 be creative and exaggerated
-even though the max completion tokens is high, keep it short, like one sentence and targeted to the person (like mention their name and stuff)
+keep it short, like one sentence and targeted to the person (like mention their name and stuff)
 please please try to make it really personal but avoid hate speech
 `
         },
@@ -162,7 +156,7 @@ ${historyText || "(they literally never said anything roast that)"}
 `
         }
       ],
-      max_completion_tokens: 150
+      max_completion_tokens: 100
     });
 
     const roast = response.choices[0].message.content.trim();
@@ -200,7 +194,6 @@ bot.on("message", async (msg) => {
   -1003261872115,
   `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
 );
-
 });
 
 // Set the webhook
@@ -355,14 +348,12 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "nothing came up, just go on google yourself you lazy ass";
     
-    // Trim memory if needed
     let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
     while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
       const removed = history.shift();
       totalChars -= removed.content.length;
     }
 
-    // Now use GPT to summarize the result
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
       messages: [
@@ -380,7 +371,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }
 });
 
-// /clearram command ---
+// clearram command
 bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
@@ -558,13 +549,12 @@ bot.on("message", async (msg) => {
     ];
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
 
-    // 
     await safeSend(bot,
       chatId,
       `${randomResponse} remind you in ${amount} ${unit} to ${task}`
     );
 
-    // set reminder (with safeguards)
+    // set reminder
    setTimeout(async () => {
   try {
     await safeSend(bot, chatId, `${username} ${task} now`);
