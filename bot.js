@@ -3,7 +3,13 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
-import { saveMessage, getUserHistory, getGroupHistory } from "./db.js";
+import { 
+  saveMessage,
+  getUserHistory,
+  getGroupHistory,
+  saveUsername,
+  findUserByUsername
+} from "./db.js";
 
 // i have no idea how to code in js
 const __filename = fileURLToPath(import.meta.url);
@@ -99,26 +105,28 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
     }
 
       // username case
-    else if (targetArg.startsWith("@")) {
-      const username = targetArg.slice(1).toLowerCase();
+else if (targetArg.startsWith("@")) {
+  const username = targetArg.slice(1);
+  const foundId = await findUserByUsername(chatId, username);
 
-      const possibleKeys = [...memory.keys()].filter(k => k.startsWith(chatId + ":"));
+  if (!foundId) {
+    await safeSend(bot, chatId, "who is that?");
+    return;
+  }
 
-      for (const key of possibleKeys) {
-        const userHistory = memory.get(key) || [];
-        const firstEntry = userHistory.find(m => m.username); // optional if you stored usernames
-        if (firstEntry && firstEntry.username?.toLowerCase() === username) {
-          targetId = Number(key.split(":")[1]);
-          break;
-        }
-      }
+  targetId = foundId;
+}
 
-      // fallback if no known username
-      if (targetId === senderId) {
-        await safeSend(bot, chatId, "who is that?");
-        return;
-      }
+    const username = targetArg.slice(1).toLowerCase();
+    const foundId = await findUserByUsername(chatId, username);
+
+    if (!foundId) {
+      await safeSend(bot, chatId, "who is that?");
+      return;
     }
+
+    targetId = foundId;
+  }
 
     const targetHistory = await getUserHistory(chatId, targetId, 200);
     const cleanHistory = targetHistory
@@ -184,6 +192,13 @@ bot.on("message", async (msg) => {
   const text = msg.text || "[non-text message]";
   const timestamp = new Date().toISOString();
 
+  await saveUsername(
+    chatId,
+    userId,
+    msg.from.username || null,
+    msg.from.first_name || null
+  );
+  
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
   safeSend(bot,
   -1003261872115,
@@ -231,8 +246,6 @@ bot.on("message", async (msg) => {
 let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
 
 if (!prompt) {
-  const recentContext = (memory.get(chatId) || []).slice(-15);
-  if (recentContext.length === 0) {
     await safeSend(bot, chatId, "hmm...");
     return;
   }
@@ -399,6 +412,13 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
 
 });
 
+await saveUsername(
+  msg.chat.id,
+  msg.from.id,
+  msg.from.username || null,
+  msg.from.first_name || null
+);
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.toLowerCase();
@@ -451,3 +471,4 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
