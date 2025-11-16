@@ -15,7 +15,7 @@ async function safeSend(bot, chatId, text, opts) {
 
 async function sendSplitMessage(bot, chatId, fullText) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const MAX_LEN = 75; // Telegram limit is 4096 chars per message
+  const MAX_LEN = 3000; // Telegram limit is 4096 chars per message
 
   if (fullText.length <= MAX_LEN) {
     await safeSend(bot, chatId, fullText);
@@ -628,3 +628,4 @@ bot.onText(/^\/unstop$/, async (msg, match) => {
   botStopped = false;
 });
 */
+
