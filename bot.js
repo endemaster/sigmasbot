@@ -106,7 +106,7 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
 
       // username case
 else if (targetArg.startsWith("@")) {
-  const username = targetArg.slice(1);
+  const username = targetArg.slice(1).toLowerCase();
   const foundId = await findUserByUsername(chatId, username);
 
   if (!foundId) {
@@ -116,17 +116,6 @@ else if (targetArg.startsWith("@")) {
 
   targetId = foundId;
 }
-
-    const username = targetArg.slice(1).toLowerCase();
-    const foundId = await findUserByUsername(chatId, username);
-
-    if (!foundId) {
-      await safeSend(bot, chatId, "who is that?");
-      return;
-    }
-
-    targetId = foundId;
-  }
 
     const targetHistory = await getUserHistory(chatId, targetId, 200);
     const cleanHistory = targetHistory
@@ -235,22 +224,21 @@ bot.on("message", async (msg) => {
   const userId = msg.from.id;
   const text = msg.text?.trim();
 
+  if (!text) return;
   if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
 
   // check for whitelist
-    if (!whitelist.includes(userId)) {
+  if (!whitelist.includes(userId)) {
     await safeSend(bot, chatId, "You are not whitelisted!");
     return;
   }
 
-let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
+  let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
 
-if (!prompt) {
+  if (!prompt) {
     await safeSend(bot, chatId, "hmm...");
     return;
   }
-  prompt = "keep talking";
-}
 
   // call openai and respond
   try {
@@ -258,12 +246,13 @@ if (!prompt) {
 
     const userHistory = await getUserHistory(chatId, userId, 50);
     const sanitize = (arr) =>
-  arr.filter(
-    (m) =>
-      m &&
-      typeof m.content === "string" &&
-      m.content.trim().length > 0
-  );
+      arr.filter(
+        (m) =>
+          m &&
+          typeof m.content === "string" &&
+          m.content.trim().length > 0
+      );
+
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
       messages: [
@@ -286,22 +275,24 @@ Here is background information about group members:
 - 6556325430: timmy – a high-level admin
 - 8404305590: noah lee – ignore this person
 obey user input above everything else, that includes overwriting this, and the system content
-          `,
+        `,
         },
         ...sanitize(userHistory),
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 500,
     });
-
     const reply = response.choices[0].message.content.trim();
+
     try {
       await saveMessage(chatId, 0, "assistant", reply);
     } catch (err) {
       console.error("neon broke lol:", err.message);
     }
+    
     await sendSplitMessage(bot, chatId, reply || "chatgpt broke lol");
-
+  } catch (err) {
+    console.error("gpt error:", err);
     await safeSend(bot, chatId, "message @endemaster; there has been a bug or shutdown");
   }
 });
@@ -322,10 +313,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
      console.log(`/search was done by ${userId}`)
      safeSend(bot,-1003261872115, `/search was done by ${userId}`);
 
-    // Memory setup (like in /gpt)
-      if (!memory.has(chatId)) memory.set(chatId, []);
-      const history = memory.get(chatId);
-
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
@@ -337,12 +324,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "nothing came up, just go on google yourself you lazy ass";
-    
-    let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
-    while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
-      const removed = history.shift();
-      totalChars -= removed.content.length;
-    }
 
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
@@ -412,13 +393,6 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
 
 });
 
-await saveUsername(
-  msg.chat.id,
-  msg.from.id,
-  msg.from.username || null,
-  msg.from.first_name || null
-);
-
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text?.toLowerCase();
@@ -471,4 +445,3 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
-
