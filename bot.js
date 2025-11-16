@@ -37,27 +37,8 @@ async function sendSplitMessage(bot, chatId, fullText) {
   }
 }
 
-//    Whitelist Configuration
-const whitelist = [
-  5357678423, // ende
-  78650586, // jasperjana
-  1127562842, // mrsigmaohio
-  7371804734, // monkey lee
-  6039702880, // twentyonepilots fan
-  6556325430, // tim
-  7505831865, // bart
-  5615559047, // daniel yu
-  1958152341, // philip
-  1675886817, // zhenya
-  5706761828, // sigma wu
-  7468269948, // luna
-  1313141417, // nate
-  6208934777, // jk
-  6486532366, // noah kim
-  1134533214, // charles
-  8404305590, // noahllee
- 
-];
+// PUT WHITELIST HERE!!!!
+
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -66,7 +47,6 @@ const openai = new OpenAI({
 // --- memory ---
 const memory = new Map(); // userId -> conversation array
 const MAX_MEMORY_CHARS = 100000; // characters
-
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
@@ -122,7 +102,6 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
       targetId = senderId;
     }
 
-
       // chatId case
     else if (/^\d+$/.test(targetArg)) {
       targetId = Number(targetArg);
@@ -150,7 +129,6 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
       }
     }
 
-
     const targetHistory = memory.get(`${chatId}:${targetId}`) || [];
     const cleanHistory = targetHistory
       
@@ -172,6 +150,7 @@ generate playful roasts that feel personal
 roast the user based entirely on their message history personality patterns writing style and vibe
 be creative and exaggerated
 even though the max completion tokens is high, keep it short, like one sentence and targeted to the person (like mention their name and stuff)
+please please try to make it really personal but avoid hate speech
 `
         },
         {
@@ -195,7 +174,6 @@ ${historyText || "(they literally never said anything roast that)"}
   }
 });
 
-
 // ping command
 bot.onText(/^\/ping$/, async (msg) => {
   const chatId = msg.chat.id;
@@ -209,8 +187,6 @@ bot.onText(/^\/ping$/, async (msg) => {
     await safeSend (bot, chatId, "if you see this message, then reality itself broke down")
   }
 });
-
-
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -250,7 +226,6 @@ app.get("/", (req, res) => {
 });
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-
 // the main feature of this bot, gpt
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -264,9 +239,7 @@ bot.on("message", async (msg) => {
   const groupHistory = memory.get(chatId);
   const userHistory = memory.get(`${chatId}:${userId}`);
 
-
   if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
-
 
   // check for whitelist
     if (!whitelist.includes(userId)) {
@@ -370,7 +343,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
       if (!memory.has(chatId)) memory.set(chatId, []);
       const history = memory.get(chatId);
 
-
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
@@ -383,7 +355,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "nothing came up, just go on google yourself you lazy ass";
     
-
     // Trim memory if needed
     let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
     while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
@@ -401,9 +372,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
       max_completion_tokens: 350,
     });
 
-     //
-  //
-     //
     const reply = response.choices[0].message.content.trim();
     await safeSend(bot, chatId, reply);
   } catch (err) {
@@ -502,7 +470,6 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   // send the message
   await safeSend(bot, chatId,`current characters memorized is like ${totalChars} or something idk`);
 });
-
 
   // whitelist command
 bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
@@ -608,28 +575,3 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
-
-/*
-// stop and unstop
-const ende = 5357678423;
-let botStopped = false;
-
-bot.onText(/^\/stop$/, async (msg, match) => {
-  if (msg.from.id !== ende) {
-  }
-
-  botStopped = true;
-});
-
-bot.onText(/^\/unstop$/, async (msg, match) => {
-  if (msg.from.id !== ende) {
-  }
-
-  botStopped = false;
-});
-*/
-
-
-
-
-
