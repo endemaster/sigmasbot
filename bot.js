@@ -1,7 +1,7 @@
 import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-
+import path from "path";
 
 // i have no idea how to code in js
 async function safeSend(bot, chatId, text, opts) {
@@ -245,9 +245,8 @@ app.post(webhookPath, (req, res) => {
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.sendFile("index.html", { root: "main" });
+  res.sendFile(path.join(__dirname, "main", "index.html"));
 });
-
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
 
@@ -628,4 +627,5 @@ bot.onText(/^\/unstop$/, async (msg, match) => {
   botStopped = false;
 });
 */
+
 
