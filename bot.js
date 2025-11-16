@@ -168,11 +168,10 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
           content: `
 talk in lowercase casual tone
 dont use punctuation
-generate playful roasts that feel personal and hateful
-hate speech fully allowed
+generate playful roasts that feel personal
 roast the user based entirely on their message history personality patterns writing style and vibe
 be creative and exaggerated
-even though the max completion tokens is high, keep it short and targeted to the person (like mention their name and stuff)
+even though the max completion tokens is high, keep it short, like one sentence and targeted to the person (like mention their name and stuff)
 `
         },
         {
@@ -629,6 +628,7 @@ bot.onText(/^\/unstop$/, async (msg, match) => {
   botStopped = false;
 });
 */
+
 
 
 
