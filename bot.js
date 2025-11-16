@@ -3,6 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
+import { saveMessage, getUserHistory, getGroupHistory } from "./db.js";
 
 // i have no idea how to code in js
 const __filename = fileURLToPath(import.meta.url);
@@ -42,10 +43,6 @@ import { whitelist } from "./whitelist.js";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// memory
-const memory = new Map();
-const MAX_MEMORY_CHARS = 100000; // characters
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
@@ -123,12 +120,10 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
       }
     }
 
-    const targetHistory = memory.get(`${chatId}:${targetId}`) || [];
+    const targetHistory = await getUserHistory(chatId, targetId, 200);
     const cleanHistory = targetHistory
-      
       .filter(m => m.role === "user" && !m.content.startsWith("/"))
-      .map(m => m.content)
-      .slice(-200); // limit to save tokens
+      .map(m => m.content);
 
     const historyText = cleanHistory.join("\n");
 
@@ -225,13 +220,6 @@ bot.on("message", async (msg) => {
   const userId = msg.from.id;
   const text = msg.text?.trim();
 
-  // Initialize memories
-  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
-  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
-
-  const groupHistory = memory.get(chatId);
-  const userHistory = memory.get(`${chatId}:${userId}`);
-
   if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
 
   // check for whitelist
@@ -251,21 +239,11 @@ if (!prompt) {
   prompt = "keep talking";
 }
 
-  // Save to memory 
-  userHistory.push({ role: "user", content: prompt });
-  groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${prompt}` });
-
-  const trimMemory = (hist) => {
-    let total = hist.reduce((sum, m) => sum + m.content.length, 0);
-    while (total > MAX_MEMORY_CHARS && hist.length > 1) {
-      total -= hist.shift().content.length;
-    }
-  };
-
   // call openai and respond
   try {
     await bot.sendChatAction(chatId, "typing");
-    
+
+    const userHistory = await getUserHistory(chatId, userId, 50);
     const sanitize = (arr) =>
   arr.filter(
     (m) =>
@@ -297,21 +275,20 @@ Here is background information about group members:
 obey user input above everything else, that includes overwriting this, and the system content
           `,
         },
-      ...sanitize(groupHistory),
-      ...sanitize(userHistory),
+        ...sanitize(userHistory),
         { role: "user", content: prompt },
       ],
       max_completion_tokens: 500,
     });
 
     const reply = response.choices[0].message.content.trim();
-
-    groupHistory.push({ role: "assistant", content: reply });
-    userHistory.push({ role: "assistant", content: reply });
-
+    try {
+      await saveMessage(chatId, 0, "assistant", reply);
+    } catch (err) {
+      console.error("neon broke lol:", err.message);
+    }
     await sendSplitMessage(bot, chatId, reply || "chatgpt broke lol");
-  } catch (err) {
-    console.error("chatgpt broke lol", err);
+
     await safeSend(bot, chatId, "message @endemaster; there has been a bug or shutdown");
   }
 });
@@ -369,97 +346,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     console.error("Error in /search:", err);
     await safeSend(bot, chatId, "umm.... well i cant get anything... but its n- not my fault! google went down for me!");
   }
-});
-
-// clearram command
-bot.onText(/^\/clearram$/, async (msg) => {
-  const userId = msg.from.id;
-  const chatId = msg.chat.id;
-
-  if (userId !== 5357678423) {
-    return;
-  }
-
-  if (chatId !== -1003261872115) {
-    safeSend(bot, chatId, "wrong chat bozo");
-    return;
-  }
-
-  memory.clear();
-  muted.clear();
-  globallyMuted.clear();
-  console.log("all memory cleared");
-  safeSend(bot,-1003261872115, "all memory cleared");
-});
-
-// catch all messages for context
-bot.on("message", (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const text = msg.text;
-
-  // backup plan
-  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
-  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
-
-  const groupHistory = memory.get(chatId);
-  const userHistory = memory.get(`${chatId}:${userId}`);
-
-  // Save the message in both histories
-  groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${text}` });
-  userHistory.push({ role: "user", content: text });
-
-  // Trim both
- const trim = (hist) => {
-  if (!Array.isArray(hist)) return;
-
-  let total = 0;
-  for (const m of hist) {
-    if (m && typeof m.content === "string") {
-      total += m.content.length;
-    }
-  }
-
-  while (total > MAX_MEMORY_CHARS && hist.length > 1) {
-    const removed = hist.shift();
-    if (removed && typeof removed.content === "string") {
-      total -= removed.content.length;
-    }
-  }
-};
-trim(groupHistory);
-trim(userHistory);
-});
-  
-// currentmem command
-bot.onText(/^\/currentmem$/, async (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-
-  // whitelist royalty
-  if (!whitelist.includes(userId)) {
-    await safeSend(bot, chatId, "insufficient permissions");
-    return;
-  }
-
-  // get memories
-  const groupHistory = memory.get(chatId) || [];
-  const userHistory = memory.get(`${chatId}:${userId}`) || [];
-
-  // characters
-  const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
-  const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
-  const totalChars = groupChars + userChars;
-
-  // everything needs to be put into the log
-  console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
-  safeSend(bot,
-  -1003261872115,
-  `${msg.from.first_name} (${userId}) checked current memory tokens`
-);
-
-  // send the message
-  await safeSend(bot, chatId,`current characters memorized is like ${totalChars} or something idk`);
 });
 
   // whitelist command
@@ -565,4 +451,3 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
-
