@@ -2,8 +2,12 @@ import express from "express";
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
+import { fileURLToPath } from "url";
 
 // i have no idea how to code in js
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 async function safeSend(bot, chatId, text, opts) {
   try {
     await bot.sendMessage(chatId, text, opts);
@@ -11,7 +15,6 @@ async function safeSend(bot, chatId, text, opts) {
     console.error(`Send failed to ${chatId}:`, err.message);
   }
 }
-
 
 async function sendSplitMessage(bot, chatId, fullText) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -94,10 +97,9 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         const chatId = msg.chat.id;
                                         await safeSend(bot,
                                          chatId,
-                                        "hi, bot is in alpha (not all features are fully implemented)"
+               "hi, bot is in alpha (not all features are fully implemented); you can visit sigmasbot.spamyourfkey.com for documentation."
                                         );
                                         });
-
 
 bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -627,5 +629,6 @@ bot.onText(/^\/unstop$/, async (msg, match) => {
   botStopped = false;
 });
 */
+
 
 
