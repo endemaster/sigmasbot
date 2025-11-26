@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/serverless";
+import { neon } from "@neondatabase/sigmasbot";
 
 const sql = neon(process.env.DATABASE_URL);
 export async function saveMessage(chatId, userId, role, content) {
@@ -12,7 +12,7 @@ export async function saveMessage(chatId, userId, role, content) {
   }
 }
 
-export async function getUserHistory(chatId, userId, limit = 50) {
+export async function getUserHistory(chatId, userId, limit = 100) {
   try {
     const rows = await sql`
       SELECT role, content FROM messages
@@ -20,14 +20,14 @@ export async function getUserHistory(chatId, userId, limit = 50) {
       ORDER BY timestamp DESC
       LIMIT ${limit};
     `;
-    return rows.reverse(); // oldest → newest
+    return rows.reverse();
   } catch (err) {
     console.error("getUserHistory error:", err);
     return [];
   }
 }
 
-export async function getGroupHistory(chatId, limit = 50) {
+export async function getGroupHistory(chatId, limit = 100) {
   try {
     const rows = await sql`
       SELECT role, content FROM messages
