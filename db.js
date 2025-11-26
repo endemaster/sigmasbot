@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/sql";
+import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL);
 export async function saveMessage(chatId, userId, role, content) {
@@ -14,8 +14,8 @@ export async function saveMessage(chatId, userId, role, content) {
 
 export async function getUserHistory(chatId, userId, limit = 100) {
   try {
-    const rows = await sql`
-      SELECT role, content FROM messages
+    const { rows } = await sql`
+      SELECT role, content FROM public.messages
       WHERE chat_id = ${chatId} AND user_id = ${userId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
@@ -29,8 +29,8 @@ export async function getUserHistory(chatId, userId, limit = 100) {
 
 export async function getGroupHistory(chatId, limit = 100) {
   try {
-    const rows = await sql`
-      SELECT role, content FROM messages
+    const { rows } = await sql`
+      SELECT role, content FROM public.messages
       WHERE chat_id = ${chatId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
@@ -60,9 +60,9 @@ export async function saveUsername(chatId, userId, username, firstName) {
 
 export async function findUserByUsername(chatId, username) {
   try {
-    const rows = await sql`
+    const { rows } = await sql`
       SELECT user_id
-      FROM usernames
+      FROM public.usernames
       WHERE chat_id = ${chatId}
         AND LOWER(username) = LOWER(${username})
       LIMIT 1;
