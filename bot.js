@@ -74,7 +74,7 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         const chatId = msg.chat.id;
                                         await safeSend(bot,
                                          chatId,
-           "hi, bot is in alpha (not all features are fully implemented); you can visit sigmasbot.spamyourfkey.com for documentation and TOS."
+                                        "https://sigmasbot.spamyourfkey.com"
                                         );
                                         });
 
@@ -445,3 +445,4 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
