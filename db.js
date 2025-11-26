@@ -1,4 +1,4 @@
-import { neon } from "@neondatabase/sigmasbot";
+import { neon } from "@neondatabase/sql";
 
 const sql = neon(process.env.DATABASE_URL);
 export async function saveMessage(chatId, userId, role, content) {
