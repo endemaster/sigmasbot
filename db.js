@@ -1,10 +1,13 @@
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL);
+
 export async function saveMessage(chatId, userId, role, content) {
+  chatId = Number(chatId);
+  userId = Number(userId);
   try {
     await sql`
-      INSERT INTO messages (chat_id, user_id, role, content, timestamp)
+      INSERT INTO public.messages (chat_id, user_id, role, content, timestamp)
       VALUES (${chatId}, ${userId}, ${role}, ${content}, NOW());
     `;
   } catch (err) {
@@ -13,9 +16,12 @@ export async function saveMessage(chatId, userId, role, content) {
 }
 
 export async function getUserHistory(chatId, userId, limit = 100) {
+  chatId = Number(chatId);
+  userId = Number(userId);
   try {
     const { rows } = await sql`
-      SELECT role, content FROM public.messages
+      SELECT role, content
+      FROM public.messages
       WHERE chat_id = ${chatId} AND user_id = ${userId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
@@ -28,9 +34,11 @@ export async function getUserHistory(chatId, userId, limit = 100) {
 }
 
 export async function getGroupHistory(chatId, limit = 100) {
+  chatId = Number(chatId);
   try {
     const { rows } = await sql`
-      SELECT role, content FROM public.messages
+      SELECT role, content
+      FROM public.messages
       WHERE chat_id = ${chatId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
@@ -43,9 +51,11 @@ export async function getGroupHistory(chatId, limit = 100) {
 }
 
 export async function saveUsername(chatId, userId, username, firstName) {
+  chatId = Number(chatId);
+  userId = Number(userId);
   try {
     await sql`
-      INSERT INTO usernames (chat_id, user_id, username, first_name, last_update)
+      INSERT INTO public.usernames (chat_id, user_id, username, first_name, last_update)
       VALUES (${chatId}, ${userId}, ${username}, ${firstName}, NOW())
       ON CONFLICT (chat_id, user_id)
       DO UPDATE SET 
@@ -59,6 +69,7 @@ export async function saveUsername(chatId, userId, username, firstName) {
 }
 
 export async function findUserByUsername(chatId, username) {
+  chatId = Number(chatId);
   try {
     const { rows } = await sql`
       SELECT user_id
