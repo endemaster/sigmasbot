@@ -19,13 +19,14 @@ export async function getUserHistory(chatId, userId, limit = 100) {
   chatId = Number(chatId);
   userId = Number(userId);
   try {
-    const { rows } = await sql`
+    const result = await sql`
       SELECT role, content
       FROM public.messages
       WHERE chat_id = ${chatId} AND user_id = ${userId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
     `;
+    const rows = result?.rows || [];
     return rows.reverse();
   } catch (err) {
     console.error("getUserHistory error:", err);
@@ -36,13 +37,14 @@ export async function getUserHistory(chatId, userId, limit = 100) {
 export async function getGroupHistory(chatId, limit = 100) {
   chatId = Number(chatId);
   try {
-    const { rows } = await sql`
+    const result = await sql`
       SELECT role, content
       FROM public.messages
       WHERE chat_id = ${chatId}
       ORDER BY timestamp DESC
       LIMIT ${limit};
     `;
+    const rows = result?.rows || [];
     return rows.reverse();
   } catch (err) {
     console.error("getGroupHistory error:", err);
