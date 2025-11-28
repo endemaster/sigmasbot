@@ -181,18 +181,18 @@ bot.on("message", async (msg) => {
   const text = msg.text || "[non-text message]";
   const timestamp = new Date().toISOString();
 
-  await saveUsername(
-    chatId,
-    userId,
-    msg.from.username || null,
-    msg.from.first_name || null
-  );
-  
+  // Save username
+  await saveUsername(chatId, userId, msg.from.username || null, msg.from.first_name || null);
+
+  // Save message
+  try {
+    await saveMessage(chatId, userId, "user", text);
+  } catch (err) {
+    console.error("saveMessage error:", err.message);
+  }
+
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
-  safeSend(bot,
-  -1003261872115,
-  `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
-);
+  await safeSend(bot, -1003261872115, `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
 });
 
 // Set the webhook
@@ -445,4 +445,5 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
 
