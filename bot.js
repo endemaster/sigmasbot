@@ -119,7 +119,7 @@ else if (targetArg.startsWith("@")) {
 
     const targetHistory = await getUserHistory(chatId, targetId, 200);
     const cleanHistory = targetHistory
-      .filter(m => m.role === "user" && !m.content.startsWith("/"))
+      .filter(m => (m.role === "user" || m.role === "assistant"))
       .map(m => m.content);
 
     const historyText = cleanHistory.join("\n");
@@ -445,5 +445,6 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
 
 
