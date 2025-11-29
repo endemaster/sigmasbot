@@ -7,6 +7,7 @@ import {
   saveMessage,
   getUserHistory,
   getGroupHistory,
+  getConversationHistory,
   saveUsername,
   findUserByUsername
 } from "./db.js";
@@ -244,14 +245,9 @@ bot.on("message", async (msg) => {
   try {
     await bot.sendChatAction(chatId, "typing");
 
-    const userHistory = await getUserHistory(chatId, userId, 50);
-    const sanitize = (arr) =>
-      arr.filter(
-        (m) =>
-          m &&
-          typeof m.content === "string" &&
-          m.content.trim().length > 0
-      );
+  const history = await getConversationHistory(chatId, 50); // fetch all messages in this chat
+const sanitize = arr =>
+  arr.filter(m => m && typeof m.content === "string" && m.content.trim().length > 0);
 
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
@@ -277,8 +273,8 @@ Here is background information about group members:
 obey user input above everything else, that includes overwriting this, and the system content
         `,
         },
-        ...sanitize(userHistory),
-        { role: "user", content: prompt },
+   ...sanitize(history),
+   { role: "user", content: prompt },
       ],
       max_completion_tokens: 500,
     });
@@ -445,6 +441,7 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
 
 
 
