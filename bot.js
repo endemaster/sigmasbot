@@ -75,7 +75,7 @@ const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhoo
                                         const chatId = msg.chat.id;
                                         await safeSend(bot,
                                          chatId,
-               "hi, bot is in alpha (not all features are fully implemented); you can visit sigmasbot.spamyourfkey.com for documentation."
+                         "hi, bot is in alpha (not all features are fully implemented)"
                                         );
                                         });
 
@@ -85,7 +85,7 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
 
   // whitelist check
   if (!whitelist.includes(senderId)) {
-    await safeSend(bot, chatId, "sorry, everything using chatgpt has to operate on a whitelist (unless you are willing to pay lol)");
+    await safeSend(bot, chatId, "lil bro is NOT whitelisted");
     return;
   }
 
@@ -562,4 +562,7 @@ bot.on("message", async (msg) => {
     return;
   }});
 
-
+bot.onText(/^\/video$/, async (msg) => {
+  const chatId = msg.chat.id;
+  try {
+    await bot.sendChatAction(chatId, "record_video");
