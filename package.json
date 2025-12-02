@@ -12,11 +12,12 @@
     "express": "^5.0.0",
     "node-telegram-bot-api": "^0.63.0",
     "pg": "^8.12.0",
-    "openai": "latest",
-    "@neondatabase/serverless": "latest"
+    "openai": "latest"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
+
+
 
