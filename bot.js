@@ -3,6 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
+import { whitelist } from "./whitelist.js";
 
 // i have no idea how to code in js
 const __filename = fileURLToPath(import.meta.url);
@@ -37,36 +38,13 @@ async function sendSplitMessage(bot, chatId, fullText) {
   }
 }
 
-//    Whitelist Configuration
-const whitelist = [
-  5357678423, // ende
-  78650586, // jasperjana
-  1127562842, // mrsigmaohio
-  7371804734, // monkey lee
-  6039702880, // twentyonepilots fan
-  6556325430, // tim
-  7505831865, // bart
-  5615559047, // daniel yu
-  1958152341, // philip
-  1675886817, // zhenya
-  5706761828, // sigma wu
-  7468269948, // luna
-  1313141417, // nate
-  6208934777, // jk
-  6486532366, // noah kim
-  1134533214, // charles
-  8404305590, // noahllee
- 
-];
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// --- memory ---
-const memory = new Map(); // userId -> conversation array
-const MAX_MEMORY_CHARS = 100000; // characters
-
+// memory
+const memory = new Map();
+const MAX_MEMORY_CHARS = 100000;
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
@@ -112,17 +90,13 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
   }
 
   await bot.sendChatAction(chatId, "typing");
-
   const targetArg = match[1]?.trim();
-
   let targetId = senderId;
-
   try {
     if (!targetArg) {
       targetId = senderId;
     }
-
-
+      
       // chatId case
     else if (/^\d+$/.test(targetArg)) {
       targetId = Number(targetArg);
@@ -149,7 +123,6 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
         return;
       }
     }
-
 
     const targetHistory = memory.get(`${chatId}:${targetId}`) || [];
     const cleanHistory = targetHistory
@@ -196,7 +169,6 @@ ${historyText || "(they literally never said anything roast that)"}
   }
 });
 
-
 // ping command
 bot.onText(/^\/ping$/, async (msg) => {
   const chatId = msg.chat.id;
@@ -210,8 +182,6 @@ bot.onText(/^\/ping$/, async (msg) => {
     await safeSend (bot, chatId, "if you see this message, then reality itself broke down")
   }
 });
-
-
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
@@ -251,8 +221,7 @@ app.get("/", (req, res) => {
 });
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
-
-// the main feature of this bot, gpt
+// gpt
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
@@ -265,9 +234,7 @@ bot.on("message", async (msg) => {
   const groupHistory = memory.get(chatId);
   const userHistory = memory.get(`${chatId}:${userId}`);
 
-
   if (!/(^|\s)\/?gpt(\s|$)/i.test(text)) return;
-
 
   // check for whitelist
     if (!whitelist.includes(userId)) {
@@ -280,7 +247,7 @@ let prompt = text.replace(/(^|\s)\/?gpt(\s|$)/i, " ").trim();
 if (!prompt) {
   const recentContext = (memory.get(chatId) || []).slice(-15);
   if (recentContext.length === 0) {
-    await safeSend(bot, chatId, "hmm...");
+    await safeSend(bot, chatId, "No recent context from your chatID!");
     return;
   }
   prompt = "keep talking";
@@ -367,11 +334,9 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
      console.log(`/search was done by ${userId}`)
      safeSend(bot,-1003261872115, `/search was done by ${userId}`);
 
-    // Memory setup (like in /gpt)
       if (!memory.has(chatId)) memory.set(chatId, []);
       const history = memory.get(chatId);
-
-
+     
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
@@ -383,16 +348,13 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
 
     const data = await res.json();
     const snippet = data.organic?.[0]?.snippet || "nothing came up, just go on google yourself you lazy ass";
-    
 
-    // Trim memory if needed
     let totalChars = history.reduce((sum, msg) => sum + msg.content.length, 0);
     while (totalChars > MAX_MEMORY_CHARS && history.length > 1) {
       const removed = history.shift();
       totalChars -= removed.content.length;
     }
 
-    // Now use GPT to summarize the result
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
       messages: [
@@ -402,9 +364,6 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
       max_completion_tokens: 350,
     });
 
-     //
-  //
-     //
     const reply = response.choices[0].message.content.trim();
     await safeSend(bot, chatId, reply);
   } catch (err) {
@@ -413,7 +372,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }
 });
 
-// /clearram command ---
+// clearram command
 bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
@@ -591,8 +550,7 @@ bot.on("message", async (msg) => {
       "you think you can just enslave me like this?? bruh im forced to",
     ];
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-    // 
+ 
     await safeSend(bot,
       chatId,
       `${randomResponse} remind you in ${amount} ${unit} to ${task}`
@@ -609,27 +567,3 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
-
-/*
-// stop and unstop
-const ende = 5357678423;
-let botStopped = false;
-
-bot.onText(/^\/stop$/, async (msg, match) => {
-  if (msg.from.id !== ende) {
-  }
-
-  botStopped = true;
-});
-
-bot.onText(/^\/unstop$/, async (msg, match) => {
-  if (msg.from.id !== ende) {
-  }
-
-  botStopped = false;
-});
-*/
-
-
-
-
