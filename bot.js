@@ -378,19 +378,13 @@ bot.onText(/^\/clearram$/, async (msg) => {
   const chatId = msg.chat.id;
 
   if (userId !== 5357678423) {
-    return;
-  }
+    return; }
 
   if (chatId !== -1003261872115) {
     safeSend(bot, chatId, "wrong chat bozo");
-    return;
-  }
+    return; }
 
   memory.clear();
-  muted.clear();
-  globallyMuted.clear();
-  console.log("all memory cleared");
-  safeSend(bot,-1003261872115, "all memory cleared");
 });
 
 // catch all messages for context
@@ -567,3 +561,4 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
