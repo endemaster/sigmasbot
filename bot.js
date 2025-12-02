@@ -565,4 +565,5 @@ bot.on("message", async (msg) => {
 bot.onText(/^\/video$/, async (msg) => {
   const chatId = msg.chat.id;
   try {
-    await bot.sendChatAction(chatId, "record_video"); }];
+    await bot.sendChatAction(chatId, "record_video");
+  } catch (err) {  } });
