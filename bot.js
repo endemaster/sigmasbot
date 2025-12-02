@@ -217,7 +217,7 @@ app.post(webhookPath, (req, res) => {
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "readme.html"));
+  res.sendFile(path.join(__dirname, "hello.html"));
 });
 app.listen(port, () => console.log(`Server running on port ${port}`));
 
@@ -561,4 +561,5 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
+
 
