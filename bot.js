@@ -260,7 +260,7 @@ if (!prompt) {
     const response = await openai.chat.completions.create({
       model: "gpt-5.2-chat-latest",
       verbosity: "low",
-      reasoning: {"effort": "high"},
+ // reasoning doesnt seem to work yet     reasoning: {"effort": "high"},
       messages: [
         { role: "system",
           content: `Talk in a formal tone. Max completion tokens is 512, but try to keep it concise.
@@ -536,4 +536,5 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
