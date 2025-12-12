@@ -446,7 +446,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
   const totalChars = groupChars + userChars;
 
-  // everything needs to be put into the log
+  // log currentmem
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   safeSend(bot,
   -1003261872115,
@@ -515,7 +515,7 @@ bot.on("message", async (msg) => {
   if (!text) return;
 
   // detector
-  const remindRegex = /remind me in (\d+)\s*(second|seconds|minute|minutes|hour|hours)\s*to\s+(.+)/i;
+  const remindRegex = /remind me in (\d+)\s*(second|seconds|minute|minutes|hour|hours|day|days)\s*to\s+(.+)/i;
   const match = text.match(remindRegex);
 
   if (match) {
@@ -526,8 +526,9 @@ bot.on("message", async (msg) => {
 
     // time converter
     let ms = amount * 1000;
-    if (unit.startsWith("minute")) ms = amount * 60_000;
-    if (unit.startsWith("hour")) ms = amount * 3_600_000;
+    if (unit.startsWith("minute")) ms = amount * 60000;
+    if (unit.startsWith("hour")) ms = amount * 3600000;
+    if (unit.startsWith("day")) ms = amount * 3600000 * 24;
 
     // random responses
     const responses = [
@@ -561,13 +562,3 @@ bot.on("message", async (msg) => {
 }, ms);
     return;
   }});
-
-bot.onText(/^\/video$/, async (msg) => {
-  const chatId = msg.chat.id;
-  try {
-    await bot.sendChatAction(chatId, "record_video");
-    await new Promise(res => setTimeout(res, 30067));
-  } catch (err) {
-    console.error(err);
-  }
-});
