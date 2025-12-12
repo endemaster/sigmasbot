@@ -1,6 +1,6 @@
 {
   "name": "sigmasbot",
-  "version": "0.0.149",
+  "version": "0.0.160",
   "type": "module",
   "main": "bot.js",
   "scripts": {
@@ -8,13 +8,14 @@
   },
   "dependencies": {
     "node-fetch": "^3.3.2",
-    "express": "^5.0.0",
-    "node-telegram-bot-api": "^0.63.0",
-    "pg": "^8.12.0",
+    "express": "^5.2.1",
+    "node-telegram-bot-api": "0.66.0",
+    "pg": "^8.16.0",
     "openai": "6.10.0"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
+
 
