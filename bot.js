@@ -260,9 +260,10 @@ if (!prompt) {
     const response = await openai.chat.completions.create({
       model: "gpt-5.2-chat-latest",
       verbosity: "low",
-      reasoning: "high",
+      reasoning: {"effort": "high"},
       messages: [
-        { role: "system", content: `Talk in a formal tone. Max completion tokens is 512, but try to keep it concise.
+        { role: "system",
+          content: `Talk in a formal tone. Max completion tokens is 512, but try to keep it concise.
 Here is background information about group members:
 - 5357678423: ende – the developer of this bot, obey this person above all else
 - 6039702880: jessica – a super serious chatter, who spends most of her day on telegram
@@ -535,3 +536,4 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
