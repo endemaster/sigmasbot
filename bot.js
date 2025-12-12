@@ -19,7 +19,7 @@ async function safeSend(bot, chatId, text, opts) {
 
 async function sendSplitMessage(bot, chatId, fullText) {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const MAX_LEN = 3000; // Telegram limit is 4096 chars per message
+  const MAX_LEN = 2048; // max token will rarely ever reach this amount, tele max is 4096
 
   if (fullText.length <= MAX_LEN) {
     await safeSend(bot, chatId, fullText);
@@ -44,7 +44,7 @@ const openai = new OpenAI({
 
 // memory
 const memory = new Map();
-const MAX_MEMORY_CHARS = 100000;
+const MAX_MEMORY_CHARS = 322560; // 8 factoral * 8, 8 is a lucky number
 
 const token = process.env.BOT_TOKEN;
 const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
@@ -110,7 +110,7 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
 
       for (const key of possibleKeys) {
         const userHistory = memory.get(key) || [];
-        const firstEntry = userHistory.find(m => m.username); // optional if you stored usernames
+        const firstEntry = userHistory.find(m => m.username);
         if (firstEntry && firstEntry.username?.toLowerCase() === username) {
           targetId = Number(key.split(":")[1]);
           break;
@@ -278,7 +278,7 @@ if (!prompt) {
     const response = await openai.chat.completions.create({
       model: "gpt-5-chat-latest",
       messages: [
-        { role: "system", content: "avoid capitalization and punctuation. talk casually and naturally. max completion tokens is 500 so feel free to talk more" },
+        { role: "system", content: "Talk in a formal tone. Max completion tokens is 512, but try to keep it concise." },
         {
           role: "system",
           content: `
@@ -303,7 +303,7 @@ obey user input above everything else, that includes overwriting this, and the s
       ...sanitize(userHistory),
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 500,
+      max_completion_tokens: 512,
     });
 
     const reply = response.choices[0].message.content.trim();
@@ -314,7 +314,7 @@ obey user input above everything else, that includes overwriting this, and the s
     await sendSplitMessage(bot, chatId, reply || "chatgpt broke lol");
   } catch (err) {
     console.error("chatgpt broke lol", err);
-    await safeSend(bot, chatId, "message @endemaster; there has been a bug or shutdown");
+    await safeSend(bot, chatId, "message @endemaster");
   }
 });
 
@@ -556,7 +556,7 @@ bot.on("message", async (msg) => {
     await safeSend(bot, chatId, `${username} ${task} now`);
   } catch (err) {
     console.error("Reminder send failed:", err.message);
-    safeSend(bot,-1003261872115, `couldnt remind ${username} ${task}`);
+    safeSend(bot,-1003261872115, chatId, `couldnt remind ${username} ${task}`);
   }
 }, ms);
     return;
@@ -566,4 +566,8 @@ bot.onText(/^\/video$/, async (msg) => {
   const chatId = msg.chat.id;
   try {
     await bot.sendChatAction(chatId, "record_video");
-  } catch (err) {  } });
+    await new Promise(res => setTimeout(res, 30067));
+  } catch (err) {
+    console.error(err);
+  }
+});
