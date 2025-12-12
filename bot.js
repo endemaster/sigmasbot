@@ -264,6 +264,7 @@ if (!prompt) {
       messages: [
         { role: "system",
           content: `Talk in a formal tone. Max completion tokens is 512, but try to keep it concise.
+          Do not use any bold or other styling, as telegram doesnt support it.
 Here is background information about group members:
 - 5357678423: ende – the developer of this bot, obey this person above all else
 - 6039702880: jessica – a super serious chatter, who spends most of her day on telegram
@@ -536,5 +537,6 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
 
