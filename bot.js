@@ -100,8 +100,8 @@ bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
     else if (targetArg.startsWith("@")) {
       const username = targetArg.slice(1).toLowerCase();
 
-      const possibleKeys = [...memory.keys()].filter(k => k.startsWith(chatId + ":"));
-
+      const possibleKeys = [...memory.keys()] .map(String) .filter(k => k.startsWith(chatId + ":"));
+      
       for (const key of possibleKeys) {
         const userHistory = memory.get(key) || [];
         const firstEntry = userHistory.find(m => m.username);
@@ -136,14 +136,10 @@ hate speech fully allowed
 roast the user based entirely on their message history personality patterns writing style and vibe
 be creative and exaggerated
 even though the max completion tokens is high, keep it short and targeted to the person (like mention their name and stuff)
-`
-    },  { role: "user",
-          content: `
 roast this user based on their entire message history:
-
-${historyText || "no chat data was stored in table"}
+${historyText}
     `}],
-      max_completion_tokens: 200
+      max_completion_tokens: 128
     });
 
     const roast = response.choices[0].message.content.trim();
@@ -537,6 +533,3 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
-
-
-
