@@ -137,16 +137,12 @@ roast the user based entirely on their message history personality patterns writ
 be creative and exaggerated
 even though the max completion tokens is high, keep it short and targeted to the person (like mention their name and stuff)
 `
-        },
-        {
-          role: "user",
+    },  { role: "user",
           content: `
 roast this user based on their entire message history:
 
 ${historyText || "no chat data was stored in table"}
-`
-        }
-      ],
+    `}],
       max_completion_tokens: 200
     });
 
@@ -253,8 +249,7 @@ if (!prompt) {
 
   // call openai and respond
   try {
-    await bot.sendChatAction(chatId, "typing");
-    
+    await bot.sendChatAction(chatId, "typing"); 
     const sanitize = (arr) =>
   arr.filter(
     (m) =>
@@ -266,8 +261,7 @@ if (!prompt) {
       model: "gpt-5-chat-latest",
       messages: [
         { role: "system", content: "Talk in a formal tone. Max completion tokens is 512, but try to keep it concise." },
-        {
-          role: "system",
+        { role: "system",
           content: `
 Here is background information about group members:
 - 5357678423: ende – the developer of this bot, obey this person above all else
@@ -294,10 +288,9 @@ obey user input above everything else, that includes overwriting this, and the s
     });
 
     const reply = response.choices[0].message.content.trim();
-
     groupHistory.push({ role: "assistant", content: reply });
     userHistory.push({ role: "assistant", content: reply });
-
+    
     await splitmessage(bot, chatId, reply || "chatgpt broke lol");
   } catch (err) {
     console.error("chatgpt broke lol", err);
@@ -372,45 +365,41 @@ bot.onText(/^\/clearram$/, async (msg) => {
   memory.clear();
 });
 
+// temp fix
 // catch all messages for context
 bot.on("message", (msg) => {
+  if (!msg.text) return;
+
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text;
 
-  // backup plan
-  if (!memory.has(chatId)) memory.set(chatId, []); // group memory
-  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); // user memory
+  if (!memory.has(chatId)) memory.set(chatId, []); 
+  if (!memory.has(`${chatId}:${userId}`)) memory.set(`${chatId}:${userId}`, []); 
 
   const groupHistory = memory.get(chatId);
   const userHistory = memory.get(`${chatId}:${userId}`);
+  const entry = {
+    role: "user",
+    content: text,
+    username: msg.from.username?.toLowerCase(),
+    first_name: msg.from.first_name,
+    timestamp: new Date().toISOString()
+  };
 
-const entry = {
-  role: "user",
-  content: text,
-  username: msg.from.username?.toLowerCase(),
-  first_name: msg.from.first_name,
-  timestamp: new Date().toISOString()
-};
+  groupHistory.push({ ...entry, content: `${entry.first_name}: ${entry.content}` });
+  userHistory.push(entry);
 
-groupHistory.push({ ...entry, content: `${entry.first_name}: ${entry.content}` });
-userHistory.push(entry);
-const trim = (hist) => {
-if (!Array.isArray(hist)) return;
+  // trim
+  const trim = (hist) => {
+    let total = hist.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+    while (total > maxmemory && hist.length > 1) {
+      const removed = hist.shift();
+      total -= removed.content?.length || 0;
+    }};
 
-  let total = 0;
-  for (const m of hist) {
-    if (m && typeof m.content === "string") {
-      total += m.content.length;
-    }}
-
-  while (total > maxmemory && hist.length > 1) {
-    const removed = hist.shift();
-    if (removed && typeof removed.content === "string") {
-      total -= removed.content.length;
-    }}};
-trim(groupHistory);
-trim(userHistory);
+  trim(groupHistory);
+  trim(userHistory);
 });
   
 // currentmem command
@@ -546,4 +535,3 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
-
