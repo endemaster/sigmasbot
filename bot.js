@@ -245,7 +245,7 @@ if (!prompt) {
   userHistory.push({ role: "user", content: prompt });
   groupHistory.push({ role: "user", content: `${msg.from.first_name}: ${prompt}` });
 
-  const trimMemory = (hist) => {
+  const trim = (hist) => {
     let total = hist.reduce((sum, m) => sum + m.content.length, 0);
     while (total > maxmemory && hist.length > 1) {
       total -= hist.shift().content.length;
@@ -546,3 +546,4 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
