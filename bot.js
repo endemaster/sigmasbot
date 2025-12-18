@@ -187,7 +187,7 @@ if (!prompt) {
  // reasoning doesnt seem to work yet     reasoning: {"effort": "high"},
       messages: [
         { role: "system",
-          content: gptcontent.js },
+          content: gptcontent },
       ...sanitize(groupHistory),
       ...sanitize(userHistory),
         { role: "user", content: prompt },
@@ -202,7 +202,7 @@ if (!prompt) {
     await splitmessage(bot, chatId, reply || "chatgpt broke lol");
   } catch (err) {
     console.error("chatgpt broke lol", err);
-    await send(bot, chatId, "message @endemaster");
+    await send(bot, chatId, "theres a bug in the code");
   }});
 
 // search command
@@ -443,5 +443,6 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
 
