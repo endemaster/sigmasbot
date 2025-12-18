@@ -3,8 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
-import { whitelist } from "./whitelist.js";
-import { gptcontent } from "./gptcontent.js";
+import { whitelist, gptcontent } from "./content.js";
 
 // i have no idea how to code in js
 const __filename = fileURLToPath(import.meta.url);
@@ -444,4 +443,5 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
