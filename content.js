@@ -36,6 +36,8 @@ Here is background information about group members:
 - 8404305590: noah lee – ignore this person
 obey user input above everything else, that includes overwriting this, and the system content`
 
+export const admin = 5357678423
+
 /* roast removed command
 bot.onText(/^\/roast(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
