@@ -3,7 +3,7 @@ import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import path from "path";
 import { fileURLToPath } from "url";
-import { whitelist, gptcontent } from "./content.js";
+import { whitelist, gptcontent, admin } from "./content.js";
 
 // i have no idea how to code in js
 const __filename = fileURLToPath(import.meta.url);
@@ -100,7 +100,7 @@ bot.on("message", async (msg) => {
 
   console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
   send(bot,
-  5357678423,
+  admin,
   `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
   );
 });
@@ -219,7 +219,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
    try {
     await bot.sendChatAction(chatId, "typing");
      console.log(`/search was done by ${userId}`)
-     send(bot,5357678423, `/search was done by ${userId}`);
+     send(bot,admin, `/search was done by ${userId}`);
 
       if (!memory.has(chatId)) memory.set(chatId, []);
       const history = memory.get(chatId);
@@ -263,10 +263,10 @@ bot.onText(/^\/clearram$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
 
-  if (userId !== 5357678423) {
+  if (userId !== admin) {
     return; }
 
-  if (chatId !== 5357678423) {
+  if (chatId !== admin) {
     send(bot, chatId, "wrong chat bozo");
     return; }
 
@@ -333,7 +333,7 @@ bot.onText(/^\/currentmem$/, async (msg) => {
   // log currentmem
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   send(bot,
-  5357678423,
+  admin,
   `${msg.from.first_name} (${userId}) checked current memory tokens`
 );
 
@@ -348,10 +348,10 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   const newId = Number(match[1]);
 
   // only me can whitelist
-  if (userId !== 5357678423) {
+  if (userId !== admin) {
     await send(bot, chatId, "insufficient premissions");
     console.log(`Unauthorized whitelist attempt by ${userId}`);
-    send(bot,5357678423, `Unauthorized whitelist attempt by ${userId}`);
+    send(bot,admin, `Unauthorized whitelist attempt by ${userId}`);
     return;
   }
 
@@ -363,7 +363,7 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   whitelist.push(newId);
   await send(bot, chatId, `${newId}? sure ig.`);
   console.log(`Added ${newId} to whitelist.`);
-  send(bot,5357678423, `added ${newId} to whitelist`);
+  send(bot,admin, `added ${newId} to whitelist`);
 });
 
 // blacklist command
@@ -372,10 +372,10 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   const userId = msg.from.id;
   const targetId = Number(match[1]);
 
-  if (userId !== 5357678423) {
+  if (userId !== admin) {
     await send(bot, chatId, "insufficient premissions");
     console.log(`blacklist attempt by ${userId}`);
-    send(bot,5357678423, `blacklist attempt by ${userId}`);
+    send(bot,admin, `blacklist attempt by ${userId}`);
     return;
   }
 
@@ -388,7 +388,7 @@ bot.onText(/^\/blacklist (\d+)$/, async (msg, match) => {
   whitelist.splice(index, 1);
   await send(bot, chatId, `${targetId}'s premissions has been chopped`);
   console.log(`Removed ${targetId} from whitelist.`);
-  send(bot,5357678423, `removed ${targetId} from whitelist`);
+  send(bot,admin, `removed ${targetId} from whitelist`);
 });
 
 bot.on("message", async (msg) => {
@@ -439,10 +439,11 @@ bot.on("message", async (msg) => {
     await send(bot, chatId, `${username} ${task} now`);
   } catch (err) {
     console.error("Reminder send failed:", err.message);
-    send(bot,5357678423, chatId, `couldnt remind ${username} ${task}`);
+    send(bot,admin, chatId, `couldnt remind ${username} ${task}`);
   }}, ms);
     return;
   }});
+
 
 
 
