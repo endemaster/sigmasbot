@@ -259,7 +259,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
   }});
 
 // clearram command
-bot.onText(/^\/clearram$/, async (msg) => {
+bot.onText(/^\/restart$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
 
@@ -443,6 +443,7 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
 
 
