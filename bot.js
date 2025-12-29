@@ -181,9 +181,6 @@ if (!prompt) {
     const response = await openai.chat.completions.create({
       model: "gpt-5.2-chat-latest",
       verbosity: "low",
- // reasoning doesnt seem to work yet     
-      // test reasoning
-      reasoning: {"effort": "high"},
       messages: [
         { role: "system",
           content: gptcontent },
@@ -257,7 +254,7 @@ bot.onText(/^\/search (.+)/, async (msg, match) => {
     await send(bot, chatId, "umm.... well i cant get anything... but its n- not my fault! google went down for me!");
   }});
 
-// clearram command
+// restart
 bot.onText(/^\/restart$/, async (msg) => {
   const userId = msg.from.id;
   const chatId = msg.chat.id;
@@ -272,7 +269,6 @@ bot.onText(/^\/restart$/, async (msg) => {
   memory.clear();
 });
 
-// catch all messages for context
 bot.on("message", (msg) => {
   if (!msg.text) return;
 
@@ -296,7 +292,6 @@ bot.on("message", (msg) => {
   groupHistory.push({ ...entry, content: `${entry.first_name}: ${entry.content}` });
   userHistory.push(entry);
 
-  // trim
   const trim = (hist) => {
     let total = hist.reduce((sum, m) => sum + (m.content?.length || 0), 0);
     while (total > maxmemory && hist.length > 1) {
@@ -307,35 +302,29 @@ bot.on("message", (msg) => {
   trim(groupHistory);
   trim(userHistory);
 });
-  
-// currentmem command
+
 bot.onText(/^\/currentmem$/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
-  // whitelist royalty
   if (!whitelist.includes(userId)) {
     await send(bot, chatId, "insufficient permissions");
     return;
   }
 
-  // get memories
   const groupHistory = memory.get(chatId) || [];
   const userHistory = memory.get(`${chatId}:${userId}`) || [];
 
-  // characters
   const groupChars = groupHistory.reduce((sum, m) => sum + m.content.length, 0);
   const userChars = userHistory.reduce((sum, m) => sum + m.content.length, 0);
   const totalChars = groupChars + userChars;
-
-  // log currentmem
+  
   console.log(`${msg.from.first_name} (${userId}) checked current memory tokens.`);
   send(bot,
   admin,
   `${msg.from.first_name} (${userId}) checked current memory tokens`
 );
 
-  // send the message
   await send(bot, chatId,`current characters memorized is like ${totalChars} or something idk`);
 });
 
@@ -345,7 +334,6 @@ bot.onText(/^\/whitelist (\d+)$/, async (msg, match) => {
   const userId = msg.from.id;
   const newId = Number(match[1]);
 
-  // only me can whitelist
   if (userId !== admin) {
     await send(bot, chatId, "insufficient premissions");
     console.log(`Unauthorized whitelist attempt by ${userId}`);
@@ -404,13 +392,11 @@ bot.on("message", async (msg) => {
     const task = match[3];
     const username = msg.from.username ? `@${msg.from.username}` : msg.from.first_name;
 
-    // time converter
     let ms = amount * 1000;
     if (unit.startsWith("minute")) ms = amount * 60000;
     if (unit.startsWith("hour")) ms = amount * 3600000;
     if (unit.startsWith("day")) ms = amount * 3600000 * 24;
 
-    // random responses
     const responses = [
       "you seriously need a reminder for that? fine. i'll",
       "dang. i'll",
@@ -431,7 +417,6 @@ bot.on("message", async (msg) => {
       `${randomResponse} remind you in ${amount} ${unit} to ${task}`
     );
 
-    // set reminder (with safeguards)
    setTimeout(async () => {
   try {
     await send(bot, chatId, `${username} ${task} now`);
