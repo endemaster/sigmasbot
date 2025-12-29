@@ -92,14 +92,23 @@ bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const name = msg.from.username || msg.from.first_name || "unknown";
-  const text = msg.text || "[non-text message]";
   const timestamp = new Date().toISOString();
 
-  console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
-  send(bot,
-  admin,
-  `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`
-  );
+  if (msg.text) {
+    const text = msg.text;
+    console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
+    await send(bot, admin, `[${timestamp}] [${chatId}] ${name} (${userId}): ${text}`);
+  } else {
+    console.log(`[${timestamp}] [${chatId}] ${name} (${userId}): [non-text message]`);
+
+    try {
+      await bot.forwardMessage(admin, chatId, msg.message_id);
+      await send(bot, admin, `[${timestamp}] [${chatId}] ${name} (${userId})`);
+    } catch (err) {
+      console.error("Failed to forward non-text message:", err.message);
+      await send(bot, admin, `Failed to forward message`);
+    }
+  }
 });
 
 // Set the webhook
