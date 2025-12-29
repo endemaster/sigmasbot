@@ -17,7 +17,6 @@ async function send(bot, chatId, text, opts) {
   }}
 
 async function splitmessage(bot, chatId, fullText) {
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const MAX_LEN = 2048; // max token will rarely ever reach this amount
                         // telegram max characters limit in 4096
 
@@ -33,7 +32,6 @@ async function splitmessage(bot, chatId, fullText) {
 
   for (const m of messages) {
     await bot.sendChatAction(chatId, "typing");
-    await sleep(200 + Math.random() * 200);
     await send(bot, chatId, m);
   }}
 
@@ -443,6 +441,7 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
+
 
 
 
