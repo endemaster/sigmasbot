@@ -17,8 +17,7 @@ async function send(bot, chatId, text, opts) {
   }}
 
 async function splitmessage(bot, chatId, fullText) {
-  const MAX_LEN = 2048; // max token will rarely ever reach this amount
-                        // telegram max characters limit in 4096
+  const MAX_LEN = 2048;
 
   if (fullText.length <= MAX_LEN) {
     await send(bot, chatId, fullText);
@@ -44,7 +43,7 @@ const memory = new Map();
 const maxmemory = 322560; // 8 factoral * 8, 8 is a lucky number
 
 const token = process.env.BOT_TOKEN;
-const renderURL = process.env.RENDER_URL?.replace(/\/$/, "");
+const url = process.env.URL?.replace(/\/$/, "");
 const port = process.env.PORT || 10000;
 
 if (!token) {
@@ -55,7 +54,7 @@ if (!token) {
 const app = express();
 app.use(express.json());
 
-// Initialize bot (webhook mode)
+// Initialize webhook
 const bot = new TelegramBot(token, { webHook: true });
 
 process.on("unhandledRejection", (err) => {
@@ -65,7 +64,7 @@ bot.on("polling_error", (err) => console.error("Polling error:", err));
 bot.on("webhook_error", (err) => console.error("Webhook error:", err));
 
 const webhookPath = `/bot${token}`;
-const webhookURL = `${renderURL || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
+const webhookURL = `${url || "https://sigmasbot.spamyourfkey.com"}${webhookPath}`;
 
                                         //        start command
                                         bot.onText(/^\/start$/, async (msg) => {
@@ -182,7 +181,9 @@ if (!prompt) {
     const response = await openai.chat.completions.create({
       model: "gpt-5.2-chat-latest",
       verbosity: "low",
- // reasoning doesnt seem to work yet     reasoning: {"effort": "high"},
+ // reasoning doesnt seem to work yet     
+      // test reasoning
+      reasoning: {"effort": "high"},
       messages: [
         { role: "system",
           content: gptcontent },
@@ -271,7 +272,6 @@ bot.onText(/^\/restart$/, async (msg) => {
   memory.clear();
 });
 
-// temp fix
 // catch all messages for context
 bot.on("message", (msg) => {
   if (!msg.text) return;
@@ -441,9 +441,3 @@ bot.on("message", async (msg) => {
   }}, ms);
     return;
   }});
-
-
-
-
-
-
