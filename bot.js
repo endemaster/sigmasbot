@@ -60,6 +60,7 @@ const bot = new TelegramBot(token, { webHook: true });
 process.on("unhandledRejection", (err) => {
   console.error("Unhandled rejection:", err);
 });
+
 bot.on("polling_error", (err) => console.error("Polling error:", err));
 bot.on("webhook_error", (err) => console.error("Webhook error:", err));
 
@@ -71,21 +72,28 @@ const webhookURL = `${url || "https://sigmasbot.spamyourfkey.com"}${webhookPath}
                                         const chatId = msg.chat.id;
                                         await send(bot,
                                          chatId,
-                         "hi, bot is in alpha (not all features are fully implemented)"
+                             "hi, bot is in alpha (not all features are fully implemented)"
                                         );
                                         });
 
 // ping command
-bot.onText(/^\/ping$/, async (msg) => {
+bot.onText(/^\/ping(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
+  let url = match[1];
+  if (!url) {
+    url = "https://sigmasbot.spamyourfkey.com/";
+  } else {
+    if (!url.startsWith("https://")) {
+      url = "https://" + url;
+    }}
+
   const latency = Date.now();
   try {
-    await fetch ("https://sigmasbot.spamyourfkey.com/")
+    await fetch(url);
     const ping = Date.now() - latency;
-    await send (bot, chatId, `${ping}ms`)
+    await send(bot, chatId, `${ping}ms`);
   } catch (err) {
-
-    await send (bot, chatId, "if you see this message, then reality itself broke down")
+    await send(bot, chatId, "ms");
   }});
 
 bot.on("message", async (msg) => {
@@ -107,9 +115,7 @@ bot.on("message", async (msg) => {
     } catch (err) {
       console.error("Failed to forward non-text message:", err.message);
       await send(bot, admin, `Failed to forward message`);
-    }
-  }
-});
+    }}});
 
 // Set the webhook
 (async () => {
